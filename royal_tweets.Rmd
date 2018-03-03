@@ -155,6 +155,7 @@ rla_tweets_list_recoded  <- apply(rla_rweet_lists,2, # for every column list
                                           function(entry_list) {paste(entry_list,collapse=",")})
                                  })
 
+rla_rweet2 <- cbind(rla_rweet,rla_tweets_list_recoded)
 
 dir.create(file.path("twitter_data"),showWarnings = FALSE)
 write.csv(rla_tweet, file=file.path("twitter_data",paste0("RoyalWedding_search_tweets_",Sys.Date(),".csv")),row.names = FALSE)
