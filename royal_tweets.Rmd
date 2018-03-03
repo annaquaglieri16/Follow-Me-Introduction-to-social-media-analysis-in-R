@@ -133,12 +133,27 @@ twitter_token <- create_token(
   consumer_secret = secret
 )
 
+
 ##### Rladies AU
 # Retrieve Tweets with Rladies in it
 rla_tweet <- search_tweets(paste0(Hashtags$X1,collapse=" OR ") , n = 3000, token = twitter_token, lang='en')
 class(rla_tweet)
 colnames(rla_tweet)
 summary(sapply(rla_tweet,length))
+
+rla_rweet <- readRDS(file.path("twitter_data","rla_tweets_toChange.rds"))
+sapply(rla_rweet,typeof)
+sapply(rla_rweet,length)
+
+names_of_lists <- names(sapply(rla_rweet,typeof))[which(sapply(rla_rweet,typeof) %in% "list")]
+rla_rweet_lists_removed <- rla_rweet[,!(colnames(rla_rweet) %in% names_of_lists)]
+rla_rweet_lists <- rla_rweet[,colnames(rla_rweet) %in% names_of_lists]
+
+rla_tweets_list_recoded  <- apply(rla_rweet_lists,2, # for every column list
+                                 function(recode_list){
+                                   sapply(recode_list,
+                                          function(entry_list) {paste(entry_list,collapse=",")})
+                                 })
 
 
 dir.create(file.path("twitter_data"),showWarnings = FALSE)
