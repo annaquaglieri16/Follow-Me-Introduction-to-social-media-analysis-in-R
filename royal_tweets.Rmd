@@ -29,6 +29,115 @@ library(rtweet)
 
 ```
 
+# Dowload tweets with Rtweets package
+
+## Tweets to search
+
+Tutorial at \url[https://cran.r-project.org/web/packages/rtweet/vignettes/auth.html]
+
+```{r eval=FALSE}
+Hashtags <- read_csv("Hashtags.csv", col_names = FALSE)
+```
+
+
+```{r eval=FALSE}
+## name of app you created
+appname <- "SaskiaFreytag"
+
+## api consumer
+key <- 'O3G4prQHtVY8mV6XH0BbDFqwy'
+
+## api comsumer secret 
+secret <- "nGqAZNnPaqqztuGlQnVYvOoLfmXjuZssMu4JhG2SZiKnQsDhqA"
+
+## create a token, storing it as object 'twitter_token'
+twitter_token <- create_token(
+  app = appname,
+  consumer_key = key,
+  consumer_secret = secret,set_renv=FALSE)
+
+```
+
+```{r eval=FALSE}
+## problems with list to vectors
+
+##### Rladies AU
+# Retrieve Tweets with Rladies in it
+rla_tweet <- search_tweets(paste0(Hashtags$X1,collapse=" OR ") , n = 3000, token = twitter_token, lang='en')
+class(rla_tweet)
+summary(sapply(rla_tweet,length))
+sapply(rla_tweet,length)
+
+# Unlist some of the columns
+names_of_lists <- names(sapply(rla_tweet,typeof))[which(sapply(rla_tweet,typeof) %in% "list")]
+
+list_to_vector <- function(recode_list){
+  sapply(recode_list,
+          function(entry_list) {paste(entry_list,collapse=",")})
+}
+
+z <- rla_tweet %>%
+  mutate_at(.vars = vars(names_of_lists), 
+            .funs = funs(list_to_vector))
+
+# Save them on googlesheets
+```
+
+## Access other information from twitter
+
+```{r eval=FALSE}
+## access and preview data on the users who posted the tweets
+us <- users_data(rla_tweet) 
+write.csv(us,file.path("twitter_data",paste0("RLAU_search_tweets_userData_",Sys.Date(),".csv")),row.names = FALSE)
+
+
+## return 200 tweets from @KyloR3n's timeline
+rladies_au_timeline <- get_timeline("RLadiesAU", n = 2000)
+head(rladies_au_timeline)
+write.csv(rladies_au_timeline,file.path("twitter_data",paste0("RLAU_timeline_",Sys.Date(),".csv")),row.names = FALSE)
+
+## extract RladiesAu's user data
+user_data_rldies_au <- users_data(rladies_au_timeline)
+write.csv(user_data_rldies_au,file.path("twitter_data",paste0("RLAU_timeline_userData_",Sys.Date(),".csv")),row.names = FALSE)
+
+
+####################################
+##### All the mentions with R-Ladies
+####################################
+rladies <- search_users("RLadies", n = 10000)
+rladies1 <- search_users("R-Ladies", n = 10000)
+combine_rladies <- rbind(rladies,rladies1)[!duplicated(rbind(rladies,rladies1)),]
+grep_rlad <- combine_rladies$screen_name[grep("RLadies",combine_rladies$screen_name)]
+rlad_tweeters <- lookup_users(grep_rlad)
+rlad <- tweets_data(rlad_tweeters)
+# for everyone get latest 
+```
+
+```{r}
+rla_tweet_df <- read.csv(file.path("twitter_data",paste0("RLAU_search_tweets_","2017-11-03",".csv")))
+us <- read.csv(file.path("twitter_data",paste0("RLAU_search_tweets_userData_","2017-11-03",".csv")))
+rladies_au_timeline <- read.csv(file.path("twitter_data",paste0("RLAU_timeline_","2017-11-03",".csv")))
+timeline_us <- read.csv(file.path("twitter_data",paste0("RLAU_timeline_userData_","2017-11-03",".csv")))
+
+# combine tweet from timeline and tweet with R-Ladies AU
+rla_tweet_df$source <- "tweetRLadiesAU"
+rladies_au_timeline$source <- "timelineRLadiesAU"
+colnames(rladies_au_timeline)[!(colnames(rladies_au_timeline) %in% colnames(rla_tweet_df))]
+colnames(rla_tweet_df)[!(colnames(rla_tweet_df) %in% colnames(rladies_au_timeline))]
+colnames(timeline_us)[!(colnames(timeline_us) %in% colnames(us))]
+colnames(us)[!(colnames(us) %in% colnames(timeline_us))]
+
+merge_tweet_time <- merge(rla_tweet_df,rladies_au_timeline,all=TRUE)
+merge_tweet_time <- merge_tweet_time[!duplicated(merge_tweet_time),]
+merge_tweet_time <- merge_tweet_time[!duplicated(merge_tweet_time[,colnames(merge_tweet_time) != "source"]),]
+merge_users <- merge(us,timeline_us,all=TRUE)
+merge_tweet_time_us <- merge(merge_tweet_time,merge_users[,c("user_id","name","screen_name","location","description","followers_count",
+                                                             "friends_count","listed_count","created_at","time_zone")],all.x=TRUE)
+
+```
+
+
+# Dowload tweets with twitteR
 
 ```{r eval = FALSE}
 api_key<-'Tx6nu4td9a1L4Cy3WLYgtoxb9'
@@ -39,8 +148,6 @@ token_secret <- "YWHNeceXflljBNjUCW99hsrY1OPV8e7euWIFVTsrmjTmP"
 twitteR::setup_twitter_oauth(api_key, api_secret, token, token_secret)
 ```
 
-
-# Dowload tweets
 
 ```{r eval=FALSE}
 twittes_rladiesAU <- twitteR::searchTwitter("@RLadiesAU", n = 10000, lang= "en", since= "2016-10-01")
@@ -103,109 +210,4 @@ tweets <- userTimeline("RLadiesAU", n = 3200)
 df_tweets <- twitteR::twListToDF(tweets)
 (n.tweet <- length(tweets))
 writeLines(strwrap(df_tweets$text[10], 60))
-```
-
-# Dowload tweets with Rtweets package
-
-## Tweets to search
-
-Tutorial at \url[https://cran.r-project.org/web/packages/rtweet/vignettes/auth.html]
-
-```{r eval=FALSE}
-Hashtags <- read_csv("Hashtags.csv", col_names = FALSE)
-```
-
-
-```{r eval=FALSE}
-## name of app you created
-appname <- "SaskiaFreytag"
-
-## api consumer
-key <- 'O3G4prQHtVY8mV6XH0BbDFqwy'
-
-## api comsumer secret 
-secret <- "nGqAZNnPaqqztuGlQnVYvOoLfmXjuZssMu4JhG2SZiKnQsDhqA"
-
-## create a token, storing it as object 'twitter_token'
-twitter_token <- create_token(
-  app = appname,
-  consumer_key = key,
-  consumer_secret = secret
-)
-
-
-##### Rladies AU
-# Retrieve Tweets with Rladies in it
-rla_tweet <- search_tweets(paste0(Hashtags$X1,collapse=" OR ") , n = 3000, token = twitter_token, lang='en')
-class(rla_tweet)
-colnames(rla_tweet)
-summary(sapply(rla_tweet,length))
-
-rla_rweet <- readRDS(file.path("twitter_data","rla_tweets_toChange.rds"))
-sapply(rla_rweet,typeof)
-sapply(rla_rweet,length)
-
-names_of_lists <- names(sapply(rla_rweet,typeof))[which(sapply(rla_rweet,typeof) %in% "list")]
-rla_rweet_lists_removed <- rla_rweet[,!(colnames(rla_rweet) %in% names_of_lists)]
-rla_rweet_lists <- rla_rweet[,colnames(rla_rweet) %in% names_of_lists]
-
-rla_tweets_list_recoded  <- apply(rla_rweet_lists,2, # for every column list
-                                 function(recode_list){
-                                   sapply(recode_list,
-                                          function(entry_list) {paste(entry_list,collapse=",")})
-                                 })
-
-rla_rweet2 <- cbind(rla_rweet,rla_tweets_list_recoded)
-
-dir.create(file.path("twitter_data"),showWarnings = FALSE)
-write.csv(rla_tweet, file=file.path("twitter_data",paste0("RoyalWedding_search_tweets_",Sys.Date(),".csv")),row.names = FALSE)
-
-## access and preview data on the users who posted the tweets
-us <- users_data(rla_tweet) 
-write.csv(us,file.path("twitter_data",paste0("RLAU_search_tweets_userData_",Sys.Date(),".csv")),row.names = FALSE)
-
-
-## return 200 tweets from @KyloR3n's timeline
-rladies_au_timeline <- get_timeline("RLadiesAU", n = 2000)
-head(rladies_au_timeline)
-write.csv(rladies_au_timeline,file.path("twitter_data",paste0("RLAU_timeline_",Sys.Date(),".csv")),row.names = FALSE)
-
-## extract RladiesAu's user data
-user_data_rldies_au <- users_data(rladies_au_timeline)
-write.csv(user_data_rldies_au,file.path("twitter_data",paste0("RLAU_timeline_userData_",Sys.Date(),".csv")),row.names = FALSE)
-
-
-####################################
-##### All the mentions with R-Ladies
-####################################
-rladies <- search_users("RLadies", n = 10000)
-rladies1 <- search_users("R-Ladies", n = 10000)
-combine_rladies <- rbind(rladies,rladies1)[!duplicated(rbind(rladies,rladies1)),]
-grep_rlad <- combine_rladies$screen_name[grep("RLadies",combine_rladies$screen_name)]
-rlad_tweeters <- lookup_users(grep_rlad)
-rlad <- tweets_data(rlad_tweeters)
-# for everyone get latest 
-```
-
-```{r}
-rla_tweet_df <- read.csv(file.path("twitter_data",paste0("RLAU_search_tweets_","2017-11-03",".csv")))
-us <- read.csv(file.path("twitter_data",paste0("RLAU_search_tweets_userData_","2017-11-03",".csv")))
-rladies_au_timeline <- read.csv(file.path("twitter_data",paste0("RLAU_timeline_","2017-11-03",".csv")))
-timeline_us <- read.csv(file.path("twitter_data",paste0("RLAU_timeline_userData_","2017-11-03",".csv")))
-
-# combine tweet from timeline and tweet with R-Ladies AU
-rla_tweet_df$source <- "tweetRLadiesAU"
-rladies_au_timeline$source <- "timelineRLadiesAU"
-colnames(rladies_au_timeline)[!(colnames(rladies_au_timeline) %in% colnames(rla_tweet_df))]
-colnames(rla_tweet_df)[!(colnames(rla_tweet_df) %in% colnames(rladies_au_timeline))]
-colnames(timeline_us)[!(colnames(timeline_us) %in% colnames(us))]
-colnames(us)[!(colnames(us) %in% colnames(timeline_us))]
-
-merge_tweet_time <- merge(rla_tweet_df,rladies_au_timeline,all=TRUE)
-merge_tweet_time <- merge_tweet_time[!duplicated(merge_tweet_time),]
-merge_tweet_time <- merge_tweet_time[!duplicated(merge_tweet_time[,colnames(merge_tweet_time) != "source"]),]
-merge_users <- merge(us,timeline_us,all=TRUE)
-merge_tweet_time_us <- merge(merge_tweet_time,merge_users[,c("user_id","name","screen_name","location","description","followers_count",
-                                                             "friends_count","listed_count","created_at","time_zone")],all.x=TRUE)
-
 ```

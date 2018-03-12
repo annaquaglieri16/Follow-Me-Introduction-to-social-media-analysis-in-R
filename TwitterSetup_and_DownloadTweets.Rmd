@@ -1,0 +1,38 @@
+---
+title: "Twitter setup - useR! 2018"
+author: "Anna Quaglieri & Saskia Freytag"
+date: "11th Feb 2018"
+output:
+  github_document:
+    toc: yes
+    toc_depth: 3
+  html_document:
+    toc: yes
+    toc_depth: 3
+linkcolor: magenta
+urlcolor: magenta
+---
+
+Getting an API
+
+One the developer page click on "Apply" in the right hand corner. This will take you to https://developer.twitter.com/en/apply-for-access. On this side apply for standard API which allows you to download tweets relating to a specific topic from the last seven days. It does only give incomplete  information. After two more pages you will land on https://apps.twitter.com/, where you can apply for access for a specific project.
+
+
+Also in the App need to setup Callback URL http://127.0.0.1:1410
+
+# Setup Twitter API
+
+Before you can download data from Twitter, you need to setup your API by becoming a Twitter developer. First, to become a Twitter developer you need to have a Twitter account. Then, you can sign up here (Figure 1). Once you have signed up click on the My Apps buttom on the left panel as in Figure 2 and then click on Create a new app. You should provide a brief description about your App and a few other details. For today's workshop we set up the the Rladies App shown in Figure 3. By clicking onto your App's name you can now manage and see your settings as well as the codes that you need to get started with R. You can find the keys that you need in the Keys and Access Tokens button. Here you can find your four codes (highlighted in Figure 4) to use into R.
+
+
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
