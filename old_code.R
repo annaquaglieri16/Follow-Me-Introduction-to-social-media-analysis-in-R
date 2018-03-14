@@ -16,3 +16,37 @@ rla_rweet2 <- cbind(rla_rweet,rla_tweets_list_recoded)
 
 dir.create(file.path("twitter_data"),showWarnings = FALSE)
 write.csv(rla_tweet, file=file.path("twitter_data",paste0("RoyalWedding_search_tweets_",Sys.Date(),".csv")),row.names = FALSE)
+
+
+#############################################
+# create google sheet token - to do only once
+#############################################
+
+# token <- gs_auth(cache = FALSE)
+# gd_token()
+# saveRDS(token, file = "googlesheets_token.rds")
+
+
+#######################
+# Save to google sheets - load the token
+######################
+
+time <- Sys.Date()
+
+gs_auth(token = "googlesheets_token.rds")
+
+
+########################################################
+# Initial sheet to which we will add all the new sheets - only once
+########################################################
+
+# initialise_tweet_spreadsheet <- gs_new("royal_tweets2018", ws_title = "royal_tweets2018", input = rla_tweet,
+#                    trim = TRUE, verbose = FALSE)
+
+# Recall spreadsheet already created
+gs_tweet <- gs_title("royal_tweets2018")
+
+# Add a new page to the spreadsheet
+add_tweets <- gs_ws_new(gs_tweet, ws_title = paste0("royal_tweets2018_",Sys.time()),input=rla_tweet, verbose = FALSE, trim=FALSE)
+
+# */5 * * * * /wehisan/general/system/bioinf-software/bioinfsoftware/R/R-3.4.2/lib64/R/bin/Rscript /home/users/allstaff/quaglieri.a/BioCAsia/test_cronjob.R

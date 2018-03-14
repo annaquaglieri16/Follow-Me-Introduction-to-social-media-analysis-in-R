@@ -1,5 +1,3 @@
-library(googlesheets)
-library(twitteR)
 library(tidyverse)
 library(RCurl)
 library(ROAuth)
@@ -9,20 +7,10 @@ library(rtweet)
 
 # Cronjob to download Royal Tweets
 
-dir <- "/Users/quaglieri.a/Documents/varie/Rladies/useR_twitter_tutorial/Twitter_Workshop_useR2018/RoyalTwitterWorkshop"
-setwd(dir)
-
-#############################################
-# create google sheet token - to do only once
-#############################################
-
-# token <- gs_auth(cache = FALSE)
-# gd_token()
-# saveRDS(token, file = "googlesheets_token.rds")
-
+setwd("~/RLadies/Royal-Twitter-Workshop-useR-2018/")
 
 # Download tweets
-Hashtags <- read_csv(file.path(dir,"Hashtags.csv"), col_names = FALSE)
+Hashtags <- read_csv("Hashtags.csv", col_names = FALSE)
 
 ## name of app you created
 appname <- "SaskiaFreytag"
@@ -54,27 +42,6 @@ z <- rla_tweet %>%
   mutate_at(.vars = vars(names_of_lists), 
             .funs = funs(list_to_vector))
 
-#######################
-# Save to google sheets - load the token
-######################
-
-time <- Sys.Date()
-
-gs_auth(token = "googlesheets_token.rds")
-
-########################################################
-# Initial sheet to which we will add all the new sheets - only once
-########################################################
-
-# initialise_tweet_spreadsheet <- gs_new("royal_tweets2018", ws_title = "royal_tweets2018", input = rla_tweet,
-#                    trim = TRUE, verbose = FALSE)
-
-# Recall spreadsheet already created
-gs_tweet <- gs_title("royal_tweets2018")
-
-# Add a new page to the spreadsheet
-add_tweets <- gs_ws_new(gs_tweet, ws_title = paste0("royal_tweets2018_",Sys.time()),input=rla_tweet, verbose = FALSE, trim=FALSE)
-
-# */5 * * * * /wehisan/general/system/bioinf-software/bioinfsoftware/R/R-3.4.2/lib64/R/bin/Rscript /home/users/allstaff/quaglieri.a/BioCAsia/test_cronjob.R
+write.csv(z, paste0("Twitter_Data/", Sys.time(), ".csv"))
 
 
