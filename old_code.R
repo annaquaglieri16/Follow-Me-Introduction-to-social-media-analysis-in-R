@@ -50,3 +50,24 @@ gs_tweet <- gs_title("royal_tweets2018")
 add_tweets <- gs_ws_new(gs_tweet, ws_title = paste0("royal_tweets2018_",Sys.time()),input=rla_tweet, verbose = FALSE, trim=FALSE)
 
 # */5 * * * * /wehisan/general/system/bioinf-software/bioinfsoftware/R/R-3.4.2/lib64/R/bin/Rscript /home/users/allstaff/quaglieri.a/BioCAsia/test_cronjob.R
+# 
+# 
+
+
+extract_hash <- str_extract_all(text,"#\\w+ | #\\w+[[:punct:]]",simplify = TRUE)
+extract_hash <- gsub(" ","",extract_hash)
+extract_hash <- tolower(gsub("[[:punct:]]","",extract_hash))
+extract_hash <- extract_hash[extract_hash != ""]
+
+extract_hash <- str_extract_all(text,"#\\w+ | #\\w+[[:punct:]]",simplify = TRUE)
+extract_hash <- gsub(" ","",extract_hash)
+extract_hash <- tolower(gsub("[[:punct:]]","",extract_hash))
+tweetsDay <- data.frame(extract_hash,
+                        day = tweetsDay$Day,
+                        isretweet = tweetsDay$isRetweet)
+
+tweetsDay_long <-  tweetsDay %>% gather(nothing,tweet,X1:X14) %>%
+  filter(tweet != "") %>%
+  group_by(day,tweet) %>%
+  summarise(Ntweet = length(nothing),Nretweet=sum(isretweet)) %>%
+  arrange(desc(Ntweet))
