@@ -41,14 +41,15 @@ Hashtags <- read_csv("Hashtags.csv", col_names = FALSE)
 
 
 ```{r eval=FALSE}
+library(rtweet)
 ## name of app you created
-appname <- "SaskiaFreytag"
+appname <- "Rladies_Twitter_App"
 
 ## api consumer
-key <- 'O3G4prQHtVY8mV6XH0BbDFqwy'
+key <- 'PqHgz3hQyAu7WndH3PYUIp1fX'
 
 ## api comsumer secret 
-secret <- "nGqAZNnPaqqztuGlQnVYvOoLfmXjuZssMu4JhG2SZiKnQsDhqA"
+secret <- "xSll5yFr7ORk63wJpO0ern48weflgCJpi2bDwL8cgninqBRart"
 
 ## create a token, storing it as object 'twitter_token'
 twitter_token <- create_token(
@@ -56,6 +57,16 @@ twitter_token <- create_token(
   consumer_key = key,
   consumer_secret = secret,set_renv=FALSE)
 
+# twitteR
+library(twitteR)
+
+api_key <-key
+api_secret<- secret
+token <- "771530276488908800-7trbtlq25REh3QTCxwo8RiWHMJO6DS5"
+token_secret<- "Gr8oFov2BYi6fWZ96jj18LGfD5UkJygV7hwg1eSLwVp8p"
+
+setup_twitter_oauth(api_key, api_secret, token, token_secret)
+MyTweets <- searchTwitter('#useR2018',lang="en")
 ```
 
 ```{r eval=FALSE}
