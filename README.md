@@ -1,5 +1,6 @@
-Follow Me: Introduction to social media analysis in R
+Follow Me: Introduction to social media analysis in R - useR! 2018 - Brisbane
 ================
+[Maria Prokofivea](https://github.com/mariaprokofieva), [Saskia Freytag](https://github.com/SaskiaFreytag) and [Anna Quaglieri](https://github.com/annaquaglieri16)
 24/06/2018
 
 Part 1

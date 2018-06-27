@@ -1,6 +1,6 @@
 ---
-title: "Follow Me: Introduction to social media analysis in R"
-subtitle: "useR! 2018 - Brisbane"
+title: "Follow Me: Introduction to social media analysis in R - useR! 2018 - Brisbane"
+author: "[Maria Prokofivea](https://github.com/mariaprokofieva), [Saskia Freytag](https://github.com/SaskiaFreytag) and [Anna Quaglieri](https://github.com/annaquaglieri16)"
 date: "24/06/2018"
 output: github_document
 ---
