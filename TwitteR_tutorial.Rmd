@@ -1,30 +1,45 @@
 ---
-title: "Twitter setup - useR! 2018"
+title: "Analyse Royal Tweets `r icon::fa_twitter(colour='#00aced')` - useR! 2018"
 author: "Anna Quaglieri & Saskia Freytag"
 date: "11th Feb 2018"
 output:
-  github_document:
-    toc: yes
-    toc_depth: 3
   html_document:
     toc: yes
     toc_depth: 3
-linkcolor: magenta
-urlcolor: magenta
+    theme: simplex
 ---
 
-```{r include=FALSE,echo=FALSE}
+# Packages to install
+
+```{r eval=FALSE}
+install.packages("twitteR")
+install.packages("wordcloud2")
+install.packages("tidyverse")
+install.packages("tidytext")
+install.packages("knitr")
+install.packages("plotly")
+devtools::install_github("ropenscilabs/icon") # to insert icons
+devtools::install_github("hadley/emo") # to insert emoji
+```
+
+
+```{r}
 library(knitr)
 library(magick)
-# Chunk options
-knitr::opts_chunk$set(fig.width=7,echo=TRUE, fig.height=7, warning=FALSE, message=FALSE,prompt=T,tidy=T,include=TRUE,cache=TRUE,fig.align='center',fig.asp=0.50,opts.label ="squarefigure",cache = TRUE)
-
 library(png)
 library(grid)
-# devtools::install_github("hadley/emo")
 library(emo)
-
+library(icon)
+library(twitteR)
 ```
+
+
+```{r include=FALSE,echo=FALSE}
+# Chunk options
+knitr::opts_chunk$set(fig.width=7,echo=TRUE, fig.height=7, warning=FALSE, message=FALSE,prompt=T,tidy=T,include=TRUE,cache=TRUE,fig.align='center',fig.asp=0.50,opts.label ="squarefigure",cache = TRUE)
+```
+
+
 
 # Reference material for the following tutorial
 
@@ -33,132 +48,118 @@ library(emo)
 * [Text mining with R](https://www.tidytextmining.com/index.html)
 
 
-# Getting started: Setup a Twitter account and create an App
+* **Refer to `Social_Media_Setup_APIs.Rmd` to setup your Twitter API and connect your R session with Twitter**
 
-1. Setup your `username` and `password` at https://twitter.com/. 
-2. Go to https://apps.twitter.com/ and sign in with your `username` and `password`
-3. Click on `Create a new App`
 
-```{r CreateAnApp,echo=FALSE,fig.cap="Create a Twitter app at https://apps.twitter.com/."}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/CreateAnApp.png"))
-#grid.raster(img)
+# Downloading tweets with `twitteR` 
 
-img%>%grid.raster()
+Once you have connected to twitter `r icon::fa("twitter")` and accessed your API, you are ready to download tweets. Let's try to return the 3 most recent tweets that contain the #useR2018 hashtag. 
+
+
+```{r first_search, warning=FALSE, message=FALSE}
+useR_tweets <- searchTwitter("#useR2018", n=3, resultType="recent")
+useR_tweets <- twListToDF(useR_tweets)
+kable(useR_tweets[,1:3])
 ```
 
-4. Fill in with you App name, brief description and a website. Ideally this website is where people can find more information about your app. However, if you don't have one just insert a valid link to a web page.
+The `searchTwitter` function will return a `status` object of 10 most recent tweets that contain \#useR2018 and their properties. This `status` object can be changed into a user-friendly `data.frame` with the function `twListToDF`. This `data.frame` contains the following columns:
 
-5. As `callback URL` set: http://127.0.0.1:1410 
+* `$text`: The text of the tweet
+* `$favorited`: Whether you liked it
+* `$favoriteCount`: How many users liked it
+* `$screenName`: Screen name of the user who posted this tweet
+* `$id`: ID of this status (every tweet has an unique ID)
+* `$replyToSN`: Screen name of the user this is in reply to
+* `$replyToUID`: ID of the user this was in reply to
+* `$statusSource`: Source user agent for this tweet
+* `$created`: When this tweet was created
+* `$truncated`: Whether this tweet was truncated
+* `$favorited`: Whether this tweet has been favorited
+* `$retweeted`: TRUE if this tweet has been retweeted
+* `$retweetCount`: The number of times this status has been retweeted
 
-```{r RladiesApp,echo=FALSE,fig.cap="Setup your app information andcallback URL."}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/RladiesApp.png"))
+This is a very simple search. Like any search engine, twitter `r icon::fa("twitter")` allows much more complicated searches using Boolean logic. For example, we can look for tweets containing \#useR2018 hashtag as well as mentioning \#rstats. If you are unsure whether your query will work, you can try it in the twitter browser.
+
+```{r second_search, warning=FALSE, message=FALSE}
+useR_rstats_tweets <- searchTwitter("#useR2018 AND #rstats", n=10, resultType="recent")
+useR_rstats_tweets <- twListToDF(useR_rstats_tweets)
+kable(useR_rstats_tweets[3:5,])
+```
+
+Here are some common examples of twitter search queries (none of these are case sensitive):
+
+|     Search Query      |                   Tweets ...                      |
+|-----------------------|---------------------------------------------------|
+| from:thomasp85        | sent from Thomas Lin Pedersen                     |
+| to:thomasp85          | sent to Thomas Lin Pedersen                       |
+| \`R rules\`           | containing exact phrase                           |
+| \#rstats -\#useR2018  | containing \#rstats but not \#useR2018            |
+| \#best OR \#useR2018  | containing \#best or \#useR2018 or both           |
+|                       |                                                   |
+
+The `searchTwitter` function also allows you to specify some further restrictions on your searches:
+
+* `lang`: restricts tweets to a given language, i.e. `"EN"`
+* `geocode`: returns tweets by users located within a given radius of the given
+latitude/longitude
+* `sinceID`: returns tweets with IDs greater (ie newer) than the specified ID
+* `maxID`: returns tweets with IDs smaller (ie older) than the specified ID
+* `since`:  restricts tweets to those since the given date
+* `until`: restricts tweets to those up until the given date
+
+Note that the time restrictions only work for time restrictions within the last two weeks, when you are connecting through a standard API (see discussion in the next section).
+
+```{r mike_kearney, echo=FALSE, fig.height=5}
+img <- readPNG(file.path("Figures_Twitter_Tutorial/reproducible.png"))
 grid.raster(img)
 ```
 
-6. Once you click on `Create your Twitter Application` you will be re-directed to your application page. You're almost there! Go to the `Keys and Access Tokens` tab and at the bootom of this page click on `Create my access token`. Your access token will appear at the bottom of the page.
+It is important to document your data collection process clearly, so it can be reproduced by other people. Mike Kearney, the author of the `rtweet` `r emo::ji("package")`, recently published a minimum list of information required to reproduce data collection from twitter. We have slightly modified his list here `r emo::ji("winking face")`:  
+ 
+* Source of twitter data: standard, premium or enterprise API
+* The R `r emo::ji("package")` you are using
+* The specific function 
+* Your search query and any filters (restrictions)
 
-```{r AccessToken,echo=FALSE,fig.width=3,echo=TRUE, fig.height=3,fig.cap="Create access token to connect R with Twitter.",fig.align='center'}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/acessToken.png"))
+# Downloading tweets for a time series
+
+With a standard API twitter limits users to downloading tweets from the last two weeks. Furthermore, the twitter rate limits cap the number of search results returned to 18,000 every 15 minutes. When you are trying to collect large datasets of tweets or tweets from a longer time period, this poses a problem. One way around this limitation is to set automatic downloads using the `cronjob` `r emo::ji("package")` for Linux/Unix or the `scheduler` `r emo::ji("package")` for Windows. 
+
+We wanted to download tweets relating to the Royal Wedding `r emo::ji("crown")` of Meghan Markle `r emo::ji("bride")` and Prince Harry `r emo::ji("groom")`, held on the 19th of May 2018 in Windsor Castle, UK. In order to obtain representative tweets from before, around, and after the time of the wedding we collected 3,000 tweets every week beginning at the 15th of March to the 31st of May (Thursday mornings, Australian time). We also collected 3,000 tweet every day for 12 days beginning from the 17th of May and ending on the 28th of May. We only collected tweets containing any of the following hashtags:
+
+```{r warning=FALSE, message=FALSE}
+Hashtags <- read_csv("Hashtags.csv", col_names = TRUE)
+kable(Hashtags)
+```
+
+The following was the exact search query we used in our cronjob (we are only going to explain how to work with `cronjob` here `r emo::ji("disappointed")`). Note that we are no longer requesting the most recent tweets but instead are requesting to be returned a mix of real time and most popular tweets. 
+
+```{r, eval =FALSE}
+rla_tweet <- searchTwitter(paste0(Hashtags$Hashtags,collapse = " OR "),
+                           n = 3000, lang = "en")
+```
+
+For the cronjob to work, we needed to setup a R script with the all authentication details, the hashtags, the query as well as saving the tweets into a .csv file, which we labled with the date of collection. This R script can then be scheduled to run as often as you like through the cronjob add-in. Just click on the add-in button in RStudio and find cronjob, where you can interactively schedule your script to run: 
+
+```{r cronjob, echo=FALSE, fig.height=5}
+img <- readPNG(file.path("Figures_Twitter_Tutorial/cronjob.png"))
 grid.raster(img)
 ```
 
+# Analyse the `r emo::ji('crown')` tweets!
 
-7. Now you have everything you need to connect `R` with Twitter! From your application page you need **four** things:
-
-* API key
-* API secret
-* Token
-* Token secret
-
-
-```{r key_and_token_example,echo=FALSE,fig.cap="Create access token to connect R with Twitter."}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/key_and_token_example.png"))
-grid.raster(img)
-```
-
-
-# Connect your R session with Twitter
-
-There are two well-known packages used to collect data from Twitter directly into R:
-
-* `twitteR` https://cran.r-project.org/web/packages/twitteR/README.html
-* `rtweet` https://cran.r-project.org/web/packages/rtweet/index.html
-
-## Setup your R session to download Twitter data with the `twitteR` package
-
-The function `twitteR::searchTwitter` will return a list of tweets which you can easily coherce to standard `data.frame` with the function `twitteR::twListToDF`.
-
-```{r eval=FALSE}
-api_key <-'your_api_key'
-api_secret<- 'your_api_secret'
-token <- 'your_token'
-token_secret<- 'your_token_secret'
-
-setup_twitter_oauth(api_key, api_secret, token, token_secret)
-
-# Search tweets
-MyTweets <- searchTwitter('#MyChosenHastags',lang="en")
-```
-
-## Setup your R session to download Twitter data with the `rtweet` package
-
-**Note**: Remember to set `set_renv=FALSE` when you run the `rtweet::create_token()` function. The default should be set to `FALSE` as mentioned in the help page `?rtweet` but it is instead set to `TRUE`. If `set_renv=TRUE` it will save a hidden token named `.rtweet_token.rds` which will be used as the default evironemnt twietter token variable. 
-
-More information about this can be found at [Obtaining and using access tokens](https://cran.r-project.org/web/packages/rtweet/vignettes/auth.html).
-
-The function `rtweet::search_tweets` returns tweets already as a data frame.
-
-```{r eval=FALSE}
-appname <- 'Rladies_app'
-api_key <-'your_api_key'
-api_secret<- 'your_api_secret'
-
-setup_twitter_oauth(api_key, api_secret, token, token_secret)
-
-## create token named "twitter_token"
-twitter_token <- create_token(
-  app = appname,
-  consumer_key = key,
-  consumer_secret = secret)
-
-MyTweet <- search_tweets('#MyChosenHastags',lang="en", token = twitter_token)
-```
-
-# Analyse Twitter data
-
-# Step 1: Tidy up your tweets!
+## Step 1: Load tweets into R
 
 * Load the tidy tools `r emo::ji('package')`.
 
 ```{r}
 library(tidyverse)
 library(tidytext)
-library(lubridate)
 ```
 
 * Load the time series of royal `r emo::ji('crown')` tweets.
 
-This step involves loading the `.csv` files containing tweets downloaded weekly and cohercing them into a `data.frame`. Every `.csv` file was downloaded with the `twitteR` `r emo::ji('package')` and saved using the code below:
-
-```{r eval=FALSE}
-# Download tweets
-Hashtags <- read_csv("Hashtags.csv", col_names = FALSE)
-
-api_key <-'your_api_key'
-api_secret<- 'your_api_secret'
-token <- 'your_token'
-token_secret<- 'your_token_secret'
-setup_twitter_oauth(api_key, api_secret, token, token_secret)
-
-# Search tweets
-rla_tweet <- twitteR::searchTwitter(paste0(Hashtags$X1,collapse=" OR "), 
-                           n=3000, lang="en")
-
-# recode lists to vectors to save it into CSV
-rla_tweet <- twitteR::twListToDF(rla_tweet)
-
-write.csv(rla_tweet, paste0("Twitter_Data/", Sys.Date(), ".csv"))
-```
+Here we load the `.csv` files containing the royal tweets downloaded weekly and cohercing them into a `data.frame`. Every `.csv` file was downloaded with the `twitteR` `r emo::ji('package')` and saved using the code shown above.
 
 The `Twitter_Data` `r emo::ji('file_folder')` contains the time series of royal `r emo::ji('crown')` tweets:
 
@@ -185,9 +186,9 @@ Tweets were downloaded from `r min(all_tweets$created)` to `r max(all_tweets$cre
 
 Now tweets are stored into the column `text` of data frame `all_tweets` and they are stored as a character vector. 
 
-The `tidytext` `r emo::ji('package')` philosophy of the tidy text format, extensively explained in [Text mining with R](https://www.tidytextmining.com/tidytext.html),  consist of having a table with **one-token-per-row**. A **token** is defined a meaningful unit of text, unit of your textual analysis. In the simplest way it will be a single word but it can also be pairs/triplets of consecutive words and so on.
+The `tidytext` `r emo::ji('package')` philosophy, extensively explained in [Text mining with R](https://www.tidytextmining.com/tidytext.html),  consist of having a table with **one-token-per-row**. A **token** is defined as a meaningful unit of text. In the simplest way it will be a single word but it can also be pairs/triplets of consecutive words and so on.
 
-## Convert to tidy text format: `unnest_token`
+## Step 2: Convert tweets to the tidy text format: `tidytext::unnest_token`
 
 The main `tidytext` `r emo::ji('package')` function which will do this for us is `unnest_token`. Let's look at a quick example to see how it works!
 
@@ -195,92 +196,255 @@ The main `tidytext` `r emo::ji('package')` function which will do this for us is
 
 ```{r}
 all_tweets %>%
-  filter(!duplicated(all_tweets)) %>% 
-  mutate(tweetID = X1) %>% 
-  unnest_tokens(output = word, input = text, token = "words") %>%
+  filter(!duplicated(all_tweets)) %>% # remove duplicated tweets
+  mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was too generic
+  select(-X1) %>%
+  unnest_tokens(output = word, input = text, token = "words") %>% # convert tweet in the text column to token = words
   select(tweetID,word) %>%
   count(word)
 ```
 
-There is a lot of useless text in here `r emo::ji('nauseated_face')` !!
+There is a lot of useless text in here `r emo::ji('scream')` !!
 
 **Create one-token-per-row where token are two consecutive words**
 
 ```{r}
 all_tweets %>%
-  filter(!duplicated(all_tweets)) %>% 
-  mutate(tweetID = X1) %>% 
+  filter(!duplicated(all_tweets)) %>%
+  mutate(tweetID = 1:n()) %>%
+  select(-X1) %>%
   unnest_tokens(output = word, input = text, token = "ngrams",n=2) %>%
   select(tweetID,word)
 ```
 
-Still a lot of useless stuff in here `r emo::ji('scream')` !!
+Looks better but we will do some more tweaks to make it more usable later!
 
-We would like to convert our 70K tweets into a more useful `r emo::ji('ok_hand')` structure that could be `%>%` and processed with the `tidyverse` tools `r emo::ji('pick')`!
+----
 
-With the code below we first create a new column in the data frame `all_tweets` called `rewteet_from` using `mutate(RT = str_extract(string = text,pattern = "^RT @(\\w+)"))` which contains the Twitter handle of every user that was retweeted. This is accomplished by using the `str_extract` function from the `stringr` `r emo::ji('package')` which extract the pattern `RT @user_handle` from every tweet that contains a retweet using the regular expression `^RT @(\\w+)`. Then, `mutate(RT = str_replace_all(RT,"^RT ",""))` will replace every `RT ` with nothing so that only the user handle is left in the `RT`column.
+With the code below, we first create a new column `retweet_from` in the data frame `all_tweets` using `mutate(RT = str_extract(string = text,pattern = "^RT @(\\w+)"))`. In each row, this column will contain the Twitter handle of the user that was retweeted. This is accomplished by using the `str_extract` function from the `stringr` `r emo::ji('package')` which extract the pattern "RT @user_handle" from every retweet (in regular expression form `^RT @(\\w+)`). Finally, `mutate(RT = str_replace_all(RT,"^RT ",""))` will replace every `RT ` occurence with nothing so that only the user handle is left in the `retweet_from`column.
 
 ```{r}
 reg_retweets <- "^RT @(\\w+)"
 all_tweets <- all_tweets %>% 
+  mutate(tweetID = 1:n()) %>% 
+  select(-X1) %>%
   mutate(retweet_from = str_extract(text, reg_retweets)) %>%
   mutate(retweet_from = str_replace_all(retweet_from, "^RT ", ""))
+all_tweets[,c("tweetID","retweet_from","isRetweet")]
 ```
 
 Now let's convert everything to the one-token-per-row format `r emo::ji('star2')`! 
 
-The code below will take the data frame `all_tweets` and convert it into a tidy text format. At this stage we do not filter out retweets but we will know which words come from a retweeted tweet thanks to the column `retweet_from` created in the chunk above. The following is a breakdown of the steps performed by the chunk below:
+The code below will take the data frame `all_tweets` and convert it into a tidy text format. At this stage we do not filter out retweets but we will know which words come from a retweeted tweet and who was retweeted thanks to the columns `isRetweet` and `retweet_from`. The following is a breakdown of the steps performed by the chunk below:
 
 * Take the `all_tweets` data frame;
 * `filter(!duplicated(all_tweets))` to filter duplicated tweets;
-* `mutate(tweetID = X1)` will create a `tweetID` which will identify uniquely each tweet;
-* `mutate(RT = str_extract(string = text,pattern = "^RT @(\\w+)"))` creates a column called `RT` which contains the Twitter handle of every user that was retweeted. This is accomplished by using the `str_extract` function from the `stringr` `r emo::ji('package')` which extract the pattern `RT @user_handle` from every tweet that contains a retweet. Then, `mutate(RT = str_replace_all(RT,"^RT ",""))` will replace every `RT ` with nothing so that only the user handle is left in the `RT`column.
-* `mutate(text = str_replace_all(text, replace_reg, ""))` will clean up the text from all unnecessary signs and language elements that are not meaningful text. 
+* `mutate(text = str_replace_all(text, replace_reg, ""))` will clean up the text from all unnecessary signs and language elements that are not meaningful text (summarised in the regular expression `replace_reg`);
 * `unnest_tokens(word, text, token = "regex", pattern = unnest_reg)` is the key part of this step and this is when the `r emo::ji('dizzy')` tidy text `r emo::ji('sparkles')` will happen!! Here we used a regular expression as our `token`. This is a very useful trick that we borrowed from [Text mining with R](https://www.tidytextmining.com/tidytext.html) `r emo::ji('closed_book')` and allows us to keep `#` and `@` from Twitter text. 
-* We then remove stop words using the `stop_words` data frame provided with `tidytext` `r emo::ji('package')` and we filter out any word that contains the handle of the user whose tweet was retweeted: `filter(!(word==retweet_from))`. Keeping these words would overestimate the number of times that a user was mentioned since the actual handle wasn't part of the actual tweet but is appears in our search by default.
-
+* We then remove stop words using the `stop_words` data frame provided with `tidytext` `r emo::ji('package')` and we filter out, for any retweet, any word that contains the handle of the user retweeted: `filter(!(word==retweet_from))`. Keeping these words would overestimate the number of times that a user was mentioned since the handle wasn't part of the actual tweet but is appears in retweeted tweets by default.
 
 ```{r}
 replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
 unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
-all_words <- all_tweets %>% 
-  filter(!duplicated(all_tweets)) %>% 
-  mutate(tweetID = X1) %>% 
-  select(-X1) %>% # remove column X1 substituted with tweetID
+all_words <- all_tweets %>% #
+  filter(!duplicated(all_tweets)) %>% #
   mutate(text = str_replace_all(text, replace_reg, "")) %>%
   unnest_tokens(word, text, token = "regex", pattern = unnest_reg) %>%
-  filter(!word %in% stop_words$word,
-         str_detect(word, "[a-z]")) %>% 
+  filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>% 
   filter(!(word==retweet_from))
 ```
 
-
-# Time series of Royal `r emo::ji('crown')` Hastags 
+**Save dataset**
 
 ```{r}
+dir.create("Twitter_Tutorial_data",showWarnings = FALSE)
+write_csv(all_words,path = "Twitter_Tutorial_data/combined_royal_time_series.csv")
+```
+
+## Hashtag frequency
+
+At the time when we set up our cronjob, it wasn't clear which hashtag would be used to refer to the Royal Wedding. So first let's investigate which hashtag of the ones we searched for was the most popular.
+
+```{r}
+our_hash <- all_words %>% 
+  mutate(OurTweets = word %in% str_to_lower(Hashtags$Hashtags)) %>%
+  filter(OurTweets) %>%
+  group_by(word) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(x=word,y=n)) + geom_bar(stat= "identity") + 
+  coord_flip() + ggtitle("Our hashtags") + theme_bw()
+
+our_hash
+```
+
+Since hashtags are used to associate tweets to a topic/trend/theme it can be interesting to investigate, which other hashtags were used in co-occurance. Here we find all other hashtags that were used more than 80 times. We will plot these in a wordcloud using the `wordcloud2` `r emo::ji("package")`. A wordcloud gives greater prominence to words that appear more frequently in the source text by making them appear larger. 
+
+```{r, wordcloud, message=FALSE}
+library(wordcloud2)
+
+all_hash <- all_words %>% 
+  filter(!(word %in% str_to_lower(Hashtags$Hashtags))) %>%
+  filter(str_detect(string = word, pattern = "#")) %>%
+  group_by(word) %>%
+  count() %>%
+  filter(n > 80) %>%
+  ungroup() %>%
+  mutate(word = reorder(word,n)) %>%
+  arrange(desc(word)) %>%
+  rename(freq = n) 
+
+wordcloud2(all_hash)
+```
+
+We can also make a wordcloud in the shape of a crown `r emo::ji("crown")`. However for this to look good we need to also use words with lower frequency.
+
+```{r, wordcloud_crown, message=FALSE, eval=FALSE}
+
+# make wordcloud with more words and in the shape of a crown
+all_hash_more <- all_words %>% 
+  filter(!(word %in% str_to_lower(Hashtags$Hashtags))) %>%
+  filter(str_detect(string = word, pattern = "#")) %>%
+  group_by(word) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(word = reorder(word,n)) %>%
+  arrange(desc(word)) %>%
+  rename(freq = n) 
+
+
+crown_path <- "crown.jpeg"
+hw <- wordcloud2(all_hash_more, size=1, figPath = crown_path )
+hw
+```
+
+```{r crown, echo=FALSE, fig.height=5}
+img <- readPNG(file.path("Figures_Twitter_Tutorial/crown_wordcloud.png"))
+grid.raster(img)
+```
+
+Interestingly, when we find a lot of hashtags referring to competitions, i.e. \#win, \#competition, \#WinItWednesday. This may be an artefact of collecting data on Thurdays, as there are lots of companies trying to entice users to retweet their content with giveaway competitions such as \#WinItWednesday:
+
+```{r win, echo=FALSE, fig.height=5}
+img <- readPNG(file.path("Figures_Twitter_Tutorial/win.png"))
+grid.raster(img)
+```
+
+## Find popular accounts and tweets 
+
+Next we turn our attention the accounts and tweets that did really well and gained lots of retweets. First let's find the account that had the most number of retweets in our sampled tweets. For this purpose we will combine number of retweets over distinct tweets by the same account.  
+
+```{r}
+popular_accounts <- all_tweets %>% 
+  filter(isRetweet) %>% 
+  group_by(retweet_from) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+kable(popular_accounts[1:5,])
+```
+
+Turns out this was \@KensingtonRoyal, which is the offical account of the Kensington Palace and on the day was tweeting out important information like the designer of Meghan Markle's dress:
+
+```{r kensington, echo=FALSE, fig.height=2}
+img <- readPNG(file.path("Figures_Twitter_Tutorial/kensington.png"))
+grid.raster(img)
+```
+
+We might also be interested in the most popular tweet in terms of retweets that we sampled or general in the twitter universe. 
+
+```{r popular_tweets}
+popular_sample <- all_tweets %>% 
+  group_by(text) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+popular_general <- all_tweets %>% 
+  filter(isRetweet) %>% 
+  filter(retweetCount == max(retweetCount)) %>% 
+  filter(row_number()==1)
+
+popular_sample$text[1]
+popular_general$text
+```
+
+```{r lucy, echo=FALSE, fig.height=5}
+img <- readPNG(file.path("Figures_Twitter_Tutorial/lucy_sempey.png"))
+grid.raster(img)
+```
+
+This is not the same tweet in our case `r emo::ji("open_mouth")`. When googling Lucy Sempey you indeed find that her tweet was the most retweeted during the `r emo::ji("crown")` Royal Wedding (<http://news.abs-cbn.com/trending/05/20/18/more-than-6m-tweets-on-harry-and-meghans-big-day>).  
+
+## Time series of Royal `r emo::ji('crown')` Hastags 
+
+```{r time_series_hashtags,fig.width=15,fig.height=10}
 library(plotly)
 
-commonTweetedHash <- all_words %>% 
+# Analyse only retweets
+commonTweetedHash <- all_words %>%
   separate(created,into=c("Day","Time"),remove=FALSE,sep=" ") %>%
-  filter(str_detect(string = word,pattern = "#")) %>% # only keep hastags that on one day have at least 50 tweets
+  filter(str_detect(string = word,pattern = "#")) %>% 
+  filter(!is.na(retweet_from)) %>% # keep only retweets
   group_by(Day,word) %>%
   count() %>%
   ungroup() %>%
-  filter(n > 100) %>% select(word) 
+  group_by(word) %>%
+  summarise(MaxOneDay=max(n), # max number of mention in one signle day
+            SumMentions=sum(n)) %>% # sum of all the mentions for this tweets
+  arrange(desc(MaxOneDay))
+kable(head(commonTweetedHash))
+```
 
+There are around 5K hashtags! We cannot follow them all across time. 
+
+Let's do some \# filtering... We will remove our searc \# and the super super popular ones (first 20 of the table abve)! Out of the remaining ones we will keep the most popular.
+
+```{r ,fig.width=15,fig.height=10}
+tweetsDay_medium_popular <- all_words %>% 
+  filter(!is.na(retweet_from)) %>%
+  separate(created,into=c("Day","Time"),remove=FALSE,sep=" ") %>%
+  filter(str_detect(string = word,pattern = "#")) %>% # only keep hastags
+  filter(!(word %in% Hashtags$Hashtags) &  # remove our search hastags
+           !(word %in% tolower(Hashtags$Hashtags)) & 
+           !(word %in% commonTweetedHash$word[1:10])) %>%
+  group_by(Day,word) %>% 
+  count() %>%
+  arrange(desc(n))
+
+# Only plot trends for medium popular hashtags
 tweetsDay <- all_words %>% 
   separate(created,into=c("Day","Time"),remove=FALSE,sep=" ") %>%
   filter(str_detect(string = word,pattern = "#")) %>% # only keep hastags
-  filter(word %in% commonTweetedHash$word) %>%
+  filter(word %in% tweetsDay_medium_popular$word[1:10]) %>%
   group_by(Day,word) %>%
   count() 
 
 plot_tweetsDay <- ggplot(tweetsDay,aes(x=Day,y=n,colour=word,group=word)) + geom_line() + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   geom_vline(xintercept = c(36), linetype = "dotted")
+plot_tweetsDay
 ```
 
-```{r interactive_time_series, eval=FALSE}
+```{r interactive_time_series,fig.width=15,fig.height=10}
 p1 <- plot_tweetsDay + theme(legend.position = "none")
 ggplotly(p1)
 ```
+
+* Peak of tweets for `#royalwedding` on the 20th of May 
+
+* **\#chogm2018**: Commonwealth Heads of Government Meeting 2018 16-19 April 2018
+
+```{r}
+chogm <- all_words[all_words$word %in% "#chogm2018",]
+dim(chogm)
+sort(table(chogm$retweet_from))
+
+chogm[chogm$retweet_from %in% "@RE_DailyMail",c("tweetID")]
+
+all_tweets$text[all_tweets$tweetID %in% c("15052","15054","15119")]
+```
+
+
+![](Twitter_Tutorial_figures/chogm2018.png)
+
 

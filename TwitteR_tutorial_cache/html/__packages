@@ -1,7 +1,7 @@
 base
-png
 knitr
 magick
+png
 emo
 tidyverse
 ggplot2
@@ -16,3 +16,6 @@ tidytext
 lubridate
 bindrcpp
 plotly
+icon
+twitteR
+wordcloud2
