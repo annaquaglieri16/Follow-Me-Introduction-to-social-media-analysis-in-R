@@ -450,6 +450,6 @@ all_tweets$text[all_tweets$tweetID %in% c("15052","15054","15119")]
 ```
 
 
-![](Twitter_Tutorial_figures/chogm2018.png)
+![](Twitter_tutorial_figures/chogm2018.png)
 
 

@@ -564,4 +564,4 @@ Let's do some \# filtering... We will remove our searc \# and the super super po
     ## [2] "RT @RE_DailyMail: Video: #PrinceHarry and #MeghanMarkle meet delegates at today<U+2019>s Commonwealth Youth Forum event #CHOGM2018 https://t.co/oH<U+2026>"
     ## [3] "RT @RE_DailyMail: #PrinceHarry and #MeghanMarkle have arrived to speak to inspirational Commonwealth Youth leaders #CHOGM2018 https://t.co/<U+2026>"
 
-![](Twitter_Tutorial_figures/chogm2018.png)
+![](Twitter_tutorial_figures/chogm2018.png)
