@@ -7,7 +7,7 @@ Part 1
 ======
 
 -   Introductory slides: see file
--   Twitter analysis in R with `tidytext`: refer to document `TwitterR_Tutorial.Rmd`
+-   Twitter analysis in R with `tidytext`: refer to document `Twitter/TwitterR_tutorial.Rmd`
 -   Setup your APIs: refer to document `Social_Media_Setup_APIs.Rmd`
 
 Part 2
