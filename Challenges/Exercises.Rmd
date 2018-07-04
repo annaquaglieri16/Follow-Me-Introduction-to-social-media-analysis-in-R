@@ -1,8 +1,15 @@
 ---
 title: 'Exercises - Follow Me: Introduction to social media analysis in R'
 author: "Maria Prokofieva, Anna Quaglieri, Saskia Freytag"
-date: "23/06/2018"
-output: html_document
+date: "useR! July 2018"
+output:
+  github_document:
+    toc: yes
+    toc_depth: 3
+  html_document:
+    theme: simplex
+    toc: yes
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
