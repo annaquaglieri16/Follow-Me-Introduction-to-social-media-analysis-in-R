@@ -4,11 +4,11 @@ author: "Anna Quaglieri & Saskia Freytag"
 date: "useR! July 2018"
 always_allow_html: yes
 output:
-  github_document:
-    toc: yes
-    toc_depth: 3
   html_document:
     theme: simplex
+    toc: yes
+    toc_depth: 3
+  github_document:
     toc: yes
     toc_depth: 3
 ---
@@ -430,7 +430,7 @@ plot_tweetsDay <- ggplot(tweetsDay,aes(x=Day,y=n,colour=word,group=word)) + geom
 plot_tweetsDay
 ```
 
-```{r interactive_time_series,fig.width=15,fig.height=10,eval=TRUE}
+```{r interactive_time_series,fig.width=15,fig.height=10,eval=FALSE}
 p1 <- plot_tweetsDay + theme(legend.position = "none")
 ggplotly(p1)
 ```
