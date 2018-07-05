@@ -15,7 +15,7 @@ output:
 library(knitr)
 library(magick)
 # Chunk options
-knitr::opts_chunk$set(fig.width=7,echo=TRUE, fig.height=7, warning=FALSE, message=FALSE,prompt=T,tidy=T,include=TRUE,cache=TRUE,fig.align='center',fig.asp=0.50,opts.label ="squarefigure",cache = TRUE)
+knitr::opts_chunk$set(fig.width=7,echo=TRUE, fig.height=7, warning=FALSE, message=FALSE,prompt=T,tidy=T,include=TRUE,cache=TRUE,fig.align='center',fig.asp=0.50,opts.label ="squarefigure",cache = FALSE)
 
 library(png)
 library(grid)
@@ -37,7 +37,7 @@ library(emo)
 3. Click on `Create a new App`
 
 ```{r CreateAnApp,echo=FALSE,fig.cap="Create a Twitter app at https://apps.twitter.com/."}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/CreateAnApp.png"))
+img <- readPNG(file.path("Social_Media_Setup_APIs_figures/CreateAnApp.png"))
 #grid.raster(img)
 
 img%>%grid.raster()
@@ -48,14 +48,14 @@ img%>%grid.raster()
 5. As `callback URL` set: http://127.0.0.1:1410 
 
 ```{r RladiesApp,echo=FALSE,fig.cap="Setup your app information andcallback URL."}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/RladiesApp.png"))
+img <- readPNG(file.path("Social_Media_Setup_APIs_figures/RladiesApp.png"))
 grid.raster(img)
 ```
 
 6. Once you click on `Create your Twitter Application` you will be re-directed to your application page. You're almost there! Go to the `Keys and Access Tokens` tab and at the bootom of this page click on `Create my access token`. Your access token will appear at the bottom of the page.
 
 ```{r AccessToken,echo=FALSE,fig.width=3, fig.height=3,fig.cap="Create access token to connect R with Twitter."}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/acessToken.png"))
+img <- readPNG(file.path("Social_Media_Setup_APIs_figures/acessToken.png"))
 grid.raster(img)
 ```
 
@@ -69,7 +69,7 @@ grid.raster(img)
 
 
 ```{r key_and_token_example,echo=FALSE,fig.cap="Create access token to connect R with Twitter.",fig.height=15,fig.width=15}
-img <- readPNG(file.path("TwitteR_tutorial_data/Figures/key_and_token_example.png"))
+img <- readPNG(file.path("Social_Media_Setup_APIs_figures/key_and_token_example.png"))
 grid.raster(img)
 ```
 
@@ -120,3 +120,137 @@ twitter_token <- create_token(
 
 MyTweet <- search_tweets('#MyChosenHastags',lang="en", token = twitter_token)
 ```
+
+
+# Facebook
+
+```{r eval=FALSE}
+install.packages("devtools")
+install_github("pablobarbera/Rfacebook", subdir="Rfacebook")
+install.packages("httr")
+```
+
+
+```{r}
+library(devtools)
+library (Rfacebook)
+library(httr)
+library(jsonlite)
+```
+
+## Option 1: connect via the facebook API
+
+* Need to set up access in the facebook first at https://developers.facebook.com
+
+```{r eval=FALSE}
+app_id1<-"useYours"
+app_secret1<-"useYous"
+
+fb_oauth <- fbOAuth(app_id=app_id1, app_secret=app_secret1,extended_permissions = FALSE)
+```
+
+
+```{r eval=FALSE}
+facebook <- oauth_endpoint(
+  authorize = 'https://www.facebook.com/dialog/oauth',
+  access = 'https://graph.facebook.com/oauth/access_token')
+```
+
+* Credentials you get from registering a new application
+
+* OAuth endpoints given in the Facebook API documentation
+  1. authorization_base_url = 'https://www.facebook.com/dialog/oauth'
+  2. token_url = 'https://graph.facebook.com/oauth/access_token'
+  3. redirect_uri = 'http://localhost:1410/', this should match Site URL
+
+```{r eval=FALSE}
+app_name<-"useR2018" #not used but good for organisation
+client_id = app_id1
+client_secret = app_secret1
+  
+myapp <- oauth_app(app_name, client_id, client_secret)
+
+
+facebook_oauth<- oauth2.0_token(facebook, myapp)
+save(facebook_oauth, file="fb_oauth")
+
+load("fb_oauth")
+
+token<-facebook_oauth$credentials$access_token
+
+me <- getUsers("me",token=fb_oauth)
+
+me2 <- getUsers("me",token=token)
+
+#getUsers(c("barackobama", "donaldtrump"), token)
+#getUsers(c("barackobama", "donaldtrump"), fb_oauth)
+
+```
+
+
+## Option 2: connect via the authentication token
+
+* Manually created 
+* Has less restrictions= more data.
+* Valid for 2 hours!!!!!
+* Create your token at https://developers.facebook.com/tools/explorer
+
+
+# Instagram
+
+```{r eval=FALSE}
+install.packages("httpuv")
+install.packages("httr")
+install.packages("jsonlite")
+install.packages("RCurl")
+```
+
+```{r eval=FALSE}
+require(httr) 
+require(jsonlite)
+require(RCurl)
+```
+
+```{r eval=FALSE}
+
+full_url <- oauth_callback()
+full_url <- gsub("(.*localhost:[0-9]{1,5}/).*", x=full_url, replacement="\\1")
+print(full_url)
+
+#http://localhost:1410/
+
+#register your client in Instagram
+#Parameters to use
+  
+#define 4 variables
+#get the first 3 from the instagram setup  
+app_name <- "useYour"
+client_id <- "useYour"
+client_secret <- "useYour"
+
+#set the type of access
+scope = "public_content"
+  
+#set access points for authorization
+#https://www.instagram.com/developer/endpoints/users/
+instagram <- oauth_endpoint(
+  authorize = "https://api.instagram.com/oauth/authorize",
+  access = "https://api.instagram.com/oauth/access_token")
+
+#the application that will be used to access Ig
+myapp <- oauth_app(app_name, client_id, client_secret)
+
+#authentication
+
+#ig_oauth <- oauth2.0_token(instagram, myapp,scope="basic",  type = "application/x-www-form-urlencoded",cache=FALSE)
+
+ig_oauth <- oauth2.0_token(instagram, myapp,scope="basic")
+
+
+save(ig_oauth, file="ig_oauth")
+load("ig_oauth")
+
+token<-ig_oauth$credentials$access_token
+
+```
+
