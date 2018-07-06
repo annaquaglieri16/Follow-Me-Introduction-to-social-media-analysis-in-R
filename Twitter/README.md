@@ -42,14 +42,14 @@ library(twitteR)
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+    ## ── Attaching packages ──────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 
     ## ✔ ggplot2 2.2.1     ✔ purrr   0.2.5
     ## ✔ tibble  1.4.2     ✔ dplyr   0.7.5
     ## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
     ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 
-    ## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ─────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
     ## ✖ dplyr::filter()   masks stats::filter()
     ## ✖ dplyr::id()       masks twitteR::id()
     ## ✖ dplyr::lag()      masks stats::lag()
@@ -241,29 +241,26 @@ The main `tidytext` 📦 function which will do this for us is `unnest_token`. L
 ``` r
 > all_tweets %>%
 +   filter(!duplicated(all_tweets)) %>% # remove duplicated tweets
-+   mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was too generic
++   mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was duplicated
 +   select(-X1) %>%
 +   unnest_tokens(output = word, input = text, token = "words") %>% # convert tweet in the text column to token = words
-+   select(tweetID,word) %>%
-+   count(word)
++   select(tweetID,word)
 ```
 
-    ## # A tibble: 57,332 x 2
-    ##    word                                      n
-    ##    <chr>                                 <int>
-    ##  1 ____                                      3
-    ##  2 _____                                     1
-    ##  3 ______________                           12
-    ##  4 ___________________                       1
-    ##  5 _____________________                     3
-    ##  6 _____________________________________     1
-    ##  7 ___fittaymuu                              2
-    ##  8 ___mkc___                                 5
-    ##  9 ___q__                                    1
-    ## 10 __christan                                3
-    ## # ... with 57,322 more rows
-
-There is a lot of useless text in here 😱 !!
+    ## # A tibble: 1,876,795 x 2
+    ##    tweetID word      
+    ##      <int> <chr>     
+    ##  1       1 rt        
+    ##  2       1 acpfonline
+    ##  3       1 this      
+    ##  4       1 is        
+    ##  5       1 a         
+    ##  6       1 wind      
+    ##  7       1 up        
+    ##  8       1 surely    
+    ##  9       1 to        
+    ## 10       1 think     
+    ## # ... with 1,876,785 more rows
 
 **Create one-token-per-row where token are two consecutive words**
 
@@ -330,13 +327,30 @@ The code below will take the data frame `all_tweets` and convert it into a tidy 
 ``` r
 > replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
 > unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
+> 
 > all_words <- all_tweets %>% #
 +   filter(!duplicated(all_tweets)) %>% #
 +   mutate(text = str_replace_all(text, replace_reg, "")) %>%
 +   unnest_tokens(word, text, token = "regex", pattern = unnest_reg) %>%
 +   filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>% 
 +   filter(!(word==retweet_from))
+> all_words[,c("word","tweetID")]
 ```
+
+    ## # A tibble: 622,346 x 2
+    ##    word          tweetID
+    ##    <chr>           <int>
+    ##  1 heads           13688
+    ##  2 263a            13688
+    ##  3 fe0f            13688
+    ##  4 #competition    13688
+    ##  5 #win            13688
+    ##  6 celebrate       13688
+    ##  7 #royalwedding   13688
+    ##  8 simply          13688
+    ##  9 follow          13688
+    ## 10 retweet         13688
+    ## # ... with 622,336 more rows
 
 **Save dataset**
 
@@ -386,7 +400,7 @@ We can also make a wordcloud in the shape of a crown 👑. However for this to l
 +     rename(freq = n)
 > 
 > 
-> crown_path <- "crown.jpeg"
+> crown_path <- "./Twitter_tutorial_figures/crown.jpeg"
 > hw <- wordcloud2(all_hash_more, size = 1, figPath = crown_path)
 > hw
 ```
