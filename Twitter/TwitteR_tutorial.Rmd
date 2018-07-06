@@ -262,7 +262,8 @@ all_words[,c("word","tweetID")]
 
 ```{r eval=FALSE}
 dir.create("Twitter_Tutorial_data",showWarnings = FALSE)
-write_csv(all_words,path = "Twitter_Tutorial_data/combined_royal_time_series.csv")
+write_csv(all_words,path = "Twitter_Tutorial_data/combined_royal_time_series_all_words.csv")
+write_csv(all_tweets,path = "Twitter_Tutorial_data/combined_royal_time_series_all_tweets.csv")
 ```
 
 ## Hashtag frequency

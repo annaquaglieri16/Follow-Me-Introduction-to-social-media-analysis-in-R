@@ -42,14 +42,14 @@ library(twitteR)
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ──────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+    ## ── Attaching packages ─────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 
     ## ✔ ggplot2 2.2.1     ✔ purrr   0.2.5
     ## ✔ tibble  1.4.2     ✔ dplyr   0.7.5
     ## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
     ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 
-    ## ── Conflicts ─────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
     ## ✖ dplyr::filter()   masks stats::filter()
     ## ✖ dplyr::id()       masks twitteR::id()
     ## ✖ dplyr::lag()      masks stats::lag()
@@ -356,7 +356,8 @@ The code below will take the data frame `all_tweets` and convert it into a tidy 
 
 ``` r
 > dir.create("Twitter_Tutorial_data", showWarnings = FALSE)
-> write_csv(all_words, path = "Twitter_Tutorial_data/combined_royal_time_series.csv")
+> write_csv(all_words, path = "Twitter_Tutorial_data/combined_royal_time_series_all_words.csv")
+> write_csv(all_tweets, path = "Twitter_Tutorial_data/combined_royal_time_series_all_tweets.csv")
 ```
 
 Hashtag frequency

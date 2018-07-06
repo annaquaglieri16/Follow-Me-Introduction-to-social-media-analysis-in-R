@@ -10,16 +10,14 @@ For the last hour we want you to apply your new knowledge to your favourite soci
 1. Twitter challenge
 --------------------
 
-Compare tweets which mention Harry to tweets mentioning Meghan in the Royal 👑 Wedding time series. You can find the data in the folder `Twitter_Tutorial_data/combined_royal_time_series.csv` (you can also downloaded from [Google Drive](https://drive.google.com/file/d/1ewstbsmeenfP7Uf38R5NrMsl7tPoyoSN/view?usp=sharing)). Produce a plot that showcases your findings and post it to twitter using the hashtags \#useR2018, \#rstats and \#socialmediachallenge. Extra points for being able to upload your results trough R!
+Compare tweets which mention Harry to tweets mentioning Meghan in the Royal 👑 Wedding time series. You can find the data in the folder `Twitter_Tutorial_data/combined_royal_time_series_all_words.csv` or `Twitter_Tutorial_data/combined_royal_time_series_all_tweets.csv` (you can also download them directly here: [combined\_royal\_time\_series\_all\_words.csv](https://drive.google.com/file/d/12Zk6wT9Z94cNPWY_0SznwjAJxuTQ97J6/view?usp=sharing) and [combined\_royal\_time\_series\_all\_tweets.csv](https://drive.google.com/file/d/1wYOKXf5AaPwEa5RXlcxPsfxXUByttF6L/view?usp=sharing)).
+
+Produce a plot that showcases your findings and post it to twitter using the hashtags \#useR2018, \#rstats and \#socialmediachallenge. Extra points for being able to upload your results trough R!
 
 The data provided is exactly the same as the `all_words` data frame created during the tutorial (replicated tweets are removed)
 
 ``` r
 library(tidyverse)
-library(here)
-
-# Load data
-all_words <- read_csv(file.path(here(),"Twitter_Tutorial_data/combined_royal_time_series.csv"))
 ```
 
 Here are some hints for the analysis to detect `Harry` and `Meghan` words within the tweets:
