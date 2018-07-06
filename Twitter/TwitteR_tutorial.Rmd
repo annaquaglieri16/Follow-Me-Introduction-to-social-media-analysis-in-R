@@ -4,11 +4,11 @@ author: "Anna Quaglieri & Saskia Freytag"
 date: "useR! July 2018"
 always_allow_html: yes
 output:
-  github_document:
-    toc: yes
-    toc_depth: 3
   html_document:
     theme: simplex
+    toc: yes
+    toc_depth: 3
+  github_document:
     toc: yes
     toc_depth: 3
 ---
