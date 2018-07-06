@@ -374,10 +374,6 @@ Since hashtags are used to associate tweets to a topic/trend/theme it can be int
 > wordcloud2(all_hash)
 ```
 
-<!--html_preserve-->
-
-<script type="application/json" data-for="htmlwidget-7706ff76958a135def0d">{"x":{"word":["#win","#competition","#winitwednesday","#royalwed","#champ","#royalwedding2018","#champagne","#r","#royal","#ro","#voxpop","#royalw","#anzacday","#meganmarkle","#royals","#suits","#windsor","#freebiefriday","#princewilliam","#meghanmarkle's","#duchessofsussex","#royalweddi","#roya","#royalwedd","#wedding","#royalwe","#windsorcastle","#royalfamily","#royalweddin","#princeharry's","#princessdiana","#chogm2018","#happy","#brexit","#birmingham","#meghan","#commonwealthday","#brooklyn99","#worldcup2018","#t","#uk","#aroyalromance","#sexualchocolate","#giveaway","#celebration","#etsy","#phone","#honor10","#weekend","#walkofamerica","#maheshb","#s","#qanon","#weddingcake","#icymi"],"freq":[1893,1610,644,616,609,525,519,384,366,334,281,279,251,247,233,220,178,175,167,160,160,135,129,128,127,127,125,125,122,119,117,116,114,109,105,102,102,102,100,95,93,91,90,90,90,88,87,87,86,86,85,84,83,81,81],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":0.0950871632329636,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
-<!--/html_preserve-->
 ![](Twitter_tutorial_figures/wordcloud1.png)
 
 We can also make a wordcloud in the shape of a crown 👑. However for this to look good we need to also use words with lower frequency.
