@@ -1,7 +1,3 @@
-Analyse Royal Tweets - useR! 2018
-================
-Anna Quaglieri & Saskia Freytag
-useR! July 2018
 
 -   [Packages to install](#packages-to-install)
 -   [Reference material for the following tutorial](#reference-material-for-the-following-tutorial)
@@ -46,14 +42,14 @@ library(twitteR)
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ──────────────────────────────────────────────────── tidyverse 1.2.1 ──
+    ## ── Attaching packages ────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 
     ## ✔ ggplot2 2.2.1     ✔ purrr   0.2.5
     ## ✔ tibble  1.4.2     ✔ dplyr   0.7.5
     ## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
     ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 
-    ## ── Conflicts ─────────────────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
     ## ✖ dplyr::filter()   masks stats::filter()
     ## ✖ dplyr::id()       masks twitteR::id()
     ## ✖ dplyr::lag()      masks stats::lag()
@@ -397,11 +393,11 @@ We can also make a wordcloud in the shape of a crown 👑. However for this to l
 > hw
 ```
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/crown-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/crown_wordcloud.png)
 
 Interestingly, when we find a lot of hashtags referring to competitions, i.e. \#win, \#competition, \#WinItWednesday. This may be an artefact of collecting data on Thurdays, as there are lots of companies trying to entice users to retweet their content with giveaway competitions such as \#WinItWednesday:
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/win-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/win.png)
 
 Find popular accounts and tweets
 --------------------------------
@@ -425,7 +421,7 @@ Next we turn our attention the accounts and tweets that did really well and gain
 
 Turns out this was @KensingtonRoyal, which is the offical account of the Kensington Palace and on the day was tweeting out important information like the designer of Meghan Markle's dress:
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/kensington-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/kensington.png)
 
 We might also be interested in the most popular tweet in terms of retweets that we sampled or general in the twitter universe.
 
@@ -446,7 +442,7 @@ We might also be interested in the most popular tweet in terms of retweets that 
 
     ## [1] "RT @LucySempey: One day you<U+2019>re 15 and posing outside Buckingham palace and 22 years later you<U+2019>re marrying the Prince. \n\nUnreal. \n\n#RoyalWed<U+2026>"
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/lucy-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/lucy_sempey.png)
 
 This is not the same tweet in our case 😮. When googling Lucy Sempey you indeed find that her tweet was the most retweeted during the 👑 Royal Wedding (<http://news.abs-cbn.com/trending/05/20/18/more-than-6m-tweets-on-harry-and-meghans-big-day>).
 
