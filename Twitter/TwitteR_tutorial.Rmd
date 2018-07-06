@@ -4,11 +4,11 @@ author: "Anna Quaglieri & Saskia Freytag"
 date: "useR! July 2018"
 always_allow_html: yes
 output:
-  html_document:
-    theme: simplex
+  github_document:
     toc: yes
     toc_depth: 3
-  github_document:
+  html_document:
+    theme: simplex
     toc: yes
     toc_depth: 3
 ---
@@ -286,7 +286,7 @@ our_hash
 
 Since hashtags are used to associate tweets to a topic/trend/theme it can be interesting to investigate, which other hashtags were used in co-occurance. Here we find all other hashtags that were used more than 80 times. We will plot these in a wordcloud using the `wordcloud2` `r emo::ji("package")`. A wordcloud gives greater prominence to words that appear more frequently in the source text by making them appear larger. 
 
-```{r, wordcloud, message=FALSE,fig.width=7,fig.height=7}
+```{r, wordcloud, message=FALSE,fig.width=7,fig.height=7,eval=FALSE}
 library(wordcloud2)
 
 all_hash <- all_words %>% 
@@ -302,6 +302,8 @@ all_hash <- all_words %>%
 
 wordcloud2(all_hash)
 ```
+
+![](Twitter_tutorial_figures/wordcloud1.png)
 
 We can also make a wordcloud in the shape of a crown `r emo::ji("crown")`. However for this to look good we need to also use words with lower frequency.
 
