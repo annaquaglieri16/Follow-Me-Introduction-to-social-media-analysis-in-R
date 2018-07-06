@@ -3,11 +3,11 @@ title: 'Exercises - Follow Me: Introduction to social media analysis in R'
 author: "Maria Prokofieva, Anna Quaglieri, Saskia Freytag"
 date: "useR! July 2018"
 output:
-  github_document:
-    toc: yes
-    toc_depth: 3
   html_document:
     theme: simplex
+    toc: yes
+    toc_depth: 3
+  github_document:
     toc: yes
     toc_depth: 3
 ---
@@ -22,7 +22,7 @@ For the last hour we want you to apply your new knowledge to your favourite soci
 
 ## 1. Twitter challenge 
 
-Compare tweets which mention Harry to tweets mentioning Meghan in the Royal `r emo::ji("crown")` Wedding time series. You can find the data in the folder `Twitter_Tutorial_data/combined_royal_time_series.csv` (also on github https://github.com/annaquaglieri16/Royal-Twitter-Workshop-useR-2018/tree/master/Twitter_Tutorial_data). Produce a plot that showcases your findings and post it to twitter using the hashtags \#useR2018, \#rstats and \#socialmediachallenge. Extra points for being able to upload your results trough R!
+Compare tweets which mention Harry to tweets mentioning Meghan in the Royal `r emo::ji("crown")` Wedding time series. You can find the data in the folder `Twitter_Tutorial_data/combined_royal_time_series.csv` (you can also downloaded from [Google Drive](https://drive.google.com/file/d/1ewstbsmeenfP7Uf38R5NrMsl7tPoyoSN/view?usp=sharing)). Produce a plot that showcases your findings and post it to twitter using the hashtags \#useR2018, \#rstats and \#socialmediachallenge. Extra points for being able to upload your results trough R!
 
 The data provided is exactly the same as the `all_words` data frame created during the tutorial (replicated tweets are removed)
 

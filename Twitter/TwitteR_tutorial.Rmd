@@ -202,14 +202,11 @@ The main `tidytext` `r emo::ji('package')` function which will do this for us is
 ```{r}
 all_tweets %>%
   filter(!duplicated(all_tweets)) %>% # remove duplicated tweets
-  mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was too generic
+  mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was duplicated
   select(-X1) %>%
   unnest_tokens(output = word, input = text, token = "words") %>% # convert tweet in the text column to token = words
-  select(tweetID,word) %>%
-  count(word)
+  select(tweetID,word)
 ```
-
-There is a lot of useless text in here `r emo::ji('scream')` !!
 
 **Create one-token-per-row where token are two consecutive words**
 
@@ -251,12 +248,14 @@ The code below will take the data frame `all_tweets` and convert it into a tidy 
 ```{r}
 replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
 unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
+
 all_words <- all_tweets %>% #
   filter(!duplicated(all_tweets)) %>% #
   mutate(text = str_replace_all(text, replace_reg, "")) %>%
   unnest_tokens(word, text, token = "regex", pattern = unnest_reg) %>%
   filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>% 
   filter(!(word==retweet_from))
+all_words[,c("word","tweetID")]
 ```
 
 **Save dataset**
@@ -321,7 +320,7 @@ all_hash_more <- all_words %>%
   rename(freq = n) 
 
 
-crown_path <- "crown.jpeg"
+crown_path <- "./Twitter_tutorial_figures/crown.jpeg"
 hw <- wordcloud2(all_hash_more, size=1, figPath = crown_path )
 hw
 ```
