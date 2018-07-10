@@ -1,5 +1,5 @@
 ---
-title: "Social Media Setup APIs: Twitter `r icon::fa_twitter(colour='#00aced')`, Facebook `r icon::fa_facebook_f(colour='#3B5998')` and Instagram `r icon::fa_instagram(colour='#fb3958')`"
+title: "Social Media Setup APIs: Twitter `r icon::fa_twitter(colour='#00aced')`, Facebook `r icon::fa_facebook_f(colour='#3B5998')`, Instagram `r icon::fa_instagram(colour='#fb3958')` and Youtube `r icon::fa_youtube(colour='#FF0000')`"
 author: "**useR! 2018**"
 date: "11th Feb 2018"
 output:
