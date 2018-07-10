@@ -121,6 +121,35 @@ twitter_token <- create_token(
 MyTweet <- search_tweets('#MyChosenHastags',lang="en", token = twitter_token)
 ```
 
+# YouTube
+## Reference material for the following tutorial
+
+* [Setting up Google API for YouTube analytics](https://www.youtube.com/embed/Im69kzhpR3I)
+
+## Setup a Google account and create an App
+
+If you do not have a Google account, you can create one at [Google](https://www.google.com/accounts/NewAccount) 
+
+Go to the [Google Developers Console] (https://console.developers.google.com/) and create a project there
+
+Obtain authorisation credentials
+
+To use YouTube data API you need to have authorization credentials. 
+The API supports API keys and OAuth 2.0 credentials. 
+
+The tuber package uses OAuth 2.0, but you will also need the API keys for some data extraction, e.g. obtaining YouTube channel ID. 
+
+To set up your credentials, you go to the Credentials section in your Google Developers Console. 
+
+For the OAuth 2.0 setup, set “Authorized redirect URIs” as  http://localhost:1410/
+
+Note down the following:
+
+* `Your API key:`
+* `OAuth 2.0 credentials:`
+* `Name:` 
+* `Client ID:`
+* `Client secret:`
 
 # Facebook
 
