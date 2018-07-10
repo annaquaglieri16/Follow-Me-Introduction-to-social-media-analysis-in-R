@@ -54,6 +54,25 @@ Here are some hints for uploading through R:
 * `twitteR::updateStatus`
 * <https://blog.rladies.org/post/deployment/>
 
+## 2. YouTube challenge 
 
+* Download channel stats from the following channels:
 
+CNN: UCupvZG-5ko_eiXAupbDfxWw
+FoxNewsChannel: UCXIJgqnII2ZOINSWNOGFThA
+ABCNews: UCBi2mrWuNuyYy4gbM6fU18Q
+Bloomberg:  UCUMZ7gohGI9HcU9VNsr2FJQ
 
+You can download them using `get_channel_stats(channel_id=channel_id)` function
+
+Produce a plot that showcases your findings to see which channel has the highest subscription, most views and highest number of video upload.
+
+* Download the list of videos from each channel and on each channel locate the videos with most views and most comments
+
+* Use the `newsTitle.csv` file and text analysis techniques we covered to calculate the length of each title (in words). 
+
+Identify the shortest and the longest title in the sample as well as each of the channels, FoxNews and CNN.
+
+* Use the same file `newsTitle.csv` and do sentiment analysis for FoxNews and CNN. Plot your results.
+
+What can you say about the tone (sentiment) of each channel?

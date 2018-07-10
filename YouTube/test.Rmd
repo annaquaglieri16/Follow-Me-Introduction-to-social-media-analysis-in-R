@@ -90,12 +90,39 @@ The `yt_search` function takes parameters that let your specify your search. The
 
 Now let's have a look at comments of the video. We can pick any video in our search and have a look at its comments, using video_id to get them
 
-```{r comments, warning=FALSE, message=FALSE}
+```{r warning=FALSE, message=FALSE}
 results <- get_comment_threads(c(video_id="qlZaiBuOaz4"))
 kable(results[1:10, c("authorDisplayName", "textDisplay")])
 ```
 
 You specify your `video id` in the `filter` argument. You can also use this argument to download comments for a specific channel. So, let's have a look at your favourite YouTube channel. Which one is your favourite? Mine is [Bloomberg](https://www.youtube.com/user/Bloomberg/featured)
+
+Channel id for `Bloomberg` is `UCUMZ7gohGI9HcU9VNsr2FJQ`. We are going to use more generic function, `list_channel_resources` that returns a list of requested channel resources.
+
+```{r comments, warning=FALSE, message=FALSE}
+a <- list_channel_resources(filter = c(channel_id = "UCUMZ7gohGI9HcU9VNsr2FJQ"), part="contentDetails")
+
+# Uploaded playlists:
+playlist_id <- a$items[[1]]$contentDetails$relatedPlaylists$uploads
+
+# Get videos on the playlist
+vids <- get_playlist_items(filter= c(playlist_id=playlist_id)) 
+
+# Video ids
+vid_ids <- as.vector(vids$contentDetails.videoId)
+
+# Function to scrape stats for all vids
+get_all_stats <- function(id) {
+  get_stats(id)
+} 
+
+# Get stats and convert results to data frame 
+res <- lapply(vid_ids, get_all_stats)
+
+res_df <- rbindlist(lapply(res, data.frame), fill=TRUE)
+
+head(res_df)
+```
 
 But... I guess.. it's getting too busy for the day, so let's take a break and have a look at [Victoria's Secrets](https://www.youtube.com/user/VICTORIASSECRET) 
 
@@ -245,14 +272,14 @@ Channel ids are:
 
 To load the existing file let's do this
 
-```{r message=FALSE}
+```{r warning=FALSE, message=FALSE}
 videostats_All <- as.data.table(read.csv("YouTube tutorial-data/videostats_All.csv", stringsAsFactors=FALSE))
 head(videostats_All)
 ```
 
 Let's have a brief look at the data. We are going to use the `stargazer` package which is fantastic for generating "academic" looking results and `describeBy` function from the `psych` package that generates statistics by a grouping variable. We will group variables by channel is.
 
-```{r message=FALSE}
+```{r warning=FALSE, message=FALSE}
 library(stargazer)
 
 stargazer(videostats_All[,.(viewCount, likeCount, commentCount, dislikeCount)], median=TRUE, digit= 1, type = "text")
@@ -272,14 +299,14 @@ Just a reminder that:
 
 Likely that the number of views relates to the number of likes: the more people view the video, the more they "like" it. We can do a correlation for this using `corr.test` function from the same `psych` package
 
-```{r message=FALSE}
+```{r warning=FALSE, message=FALSE}
 results<-corr.test(videostats_All[, .(viewCount, likeCount, commentCount, dislikeCount)], use = "complete",method="pearson",adjust="holm",
           alpha=.05,ci=FALSE)
 results$r
 ```
 Or we can have a plot it on a graph with the help of `gglot2` and `gridExtra`
 
-```{r message=FALSE}
+```{r warning=FALSE, message=FALSE}
 library (ggplot2)
 library(gridExtra)
 p1=ggplot(data = videostats_All[-1, ]) + geom_point(aes(x = viewCount, y = likeCount))
@@ -290,7 +317,7 @@ grid.arrange(p1, p2, p3, ncol = 2)
 
 You just cannot LOVE Adriana Lima! But move on....
 
-###Text analysis
+##Text analysis
 
 As you see the `title` column has a title that describes the video. It is logically to assume that title is the first to attract attention of the viewer. Let's have a closer look and see if we can identify specific words.
 
@@ -310,18 +337,110 @@ title_words_All_Source<-videostats_All %>%
 
 I saved the output into `title_words_All_Source.csv` file , so you can load it and continue working with a tokenized version of the text.
 
-```{r message=FALSE}
+```{r warning=FALSE, message=FALSE}
 title_words_All_Source <- as.data.table(read.csv("YouTube tutorial-data/title_words_All_Source.csv", stringsAsFactors=FALSE))
 head(title_words_All_Source)
 ```
+We can compare frequencies of the word usage between VS and Vogue:
+  
+```{r warning=FALSE, message=FALSE}
+frequencyVS_Vogue <- title_words_All_Source %>% 
+  select(source, word, freq) %>% 
+  spread(source, freq) %>%
+  arrange(VS, Vogue)
+head(frequencyVS_Vogue, 10)
+```
 
+So thqt it make more sense let's show word usage by building up the wordcloud. This will allow us to see the most prominent words immediately.
 
+```{r warning=FALSE, message=FALSE}
+words_VS <-title_words_All_Source%>% 
+filter(source=="VS")%>%
+select(word, n)
 
+words_Vogue <-title_words_All_Source%>% 
+filter(source=="Vogue")%>%
+select(word, n)
 
+library(wordcloud)      
+wordcloud(words_VS$word, words_VS$n)
+wordcloud(words_Vogue$word, words_Vogue$n)
 
+library(wordcloud2)
+wordcloud2(data=words_VS, size = 1,
+color = "random-light",  shape = 'star')
 
+```
+Moving on further into the text analysis, let's have a look at the sentiment.
 
-###Topic modelling
+Sentiment analysis is a tool that assess the tone and the voice of the text. It uses pre-made dictionaries with words classified into categories. Different dictionaries use different categories. For example, the `nrc lexicon` categorizes words in a binary fashion (“yes”/“no”) into categories of positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust. 
+We can get the list of words in the dictionary and there further options to adjust the list:
+```{r warning=FALSE, message=FALSE}
+get_sentiments("afinn")  #assigns words with a score that runs between -5 and 5, with negative scores indicating negative sentiment and positive scores indicating positive sentiment.
+
+get_sentiments("bing") #categorizes words in a binary fashion into positive and negative categories. 
+
+get_sentiments("nrc") #categories of positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust.
+```
+
+We will plot the results and will use `ggplot2` package for this.
+
+```{r warning=FALSE, message=FALSE}
+
+library(ggplot2)
+title_words_All_Source %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(source, sentiment) %>%
+  summarize(n = n()) %>%
+  ggplot(aes(x = source, y = n, fill = source)) + 
+  geom_bar(stat = "identity", alpha = 0.8) + 
+  facet_wrap(~ sentiment, ncol = 5) 
+```
+
+On the next steps, we can have a look at comments for different sources and compare the word usage in the audience. Downloading all comments takes time.. You can do it on your own using the following function:
+  
+```
+commentsVS = lapply(as.character(videosVS$video_id), function(x){
+  get_comment_threads(c(video_id = x), max_results = 50)
+)
+```
+
+Please note that if the number of comments is too high, you may get errors.. To avoid, limit the `max_results`. 
+
+or you can use the file I created for you. I used VS (you should already have it!), US Vogue and British Vogue channels for the dataset `comments_All.csv`
+
+```{r message=FALSE}
+comments_All <- as.data.table(read.csv("YouTube tutorial-data/comments_All.csv", stringsAsFactors=FALSE))
+head(comments_All)
+```
+
+As you see we need to clean the text. it does look messy.....
+
+```{r message=FALSE}
+replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
+unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
+
+comments_words<-comments_All %>%
+  as.tibble() %>% 
+  unnest_tokens(word, comment, token = "regex", pattern = unnest_reg) %>%
+  filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>%
+  count(source, word, sort = TRUE) 
+```
+Now let's apply the sentiment:
+
+```{r warning=FALSE, message=FALSE}
+
+library(ggplot2)
+comments_words %>%
+  inner_join(get_sentiments("bing")) %>%
+  group_by(source, sentiment) %>%
+  summarize(n = n()) %>%
+  ggplot(aes(x = source, y = n, fill = source)) + 
+  geom_bar(stat = "identity", alpha = 0.8) + 
+  facet_wrap(~ sentiment, ncol = 5) 
+```
+
+##Topic modelling
 
 Let's see what topics we can find in the description of the videos and compare them across three channels, US Vogue, British Vogue and VS. Does the description of the video affect the number of likes, views and dislikes?
 
@@ -330,14 +449,14 @@ For the topic modeling we will go to the `topicmodels` package. It does not work
 We will use the dataset we have already `videosVS` - it has a list of all videos from the channel as well as its description. I also downloaded the same data from  [US Vogue](https://www.youtube.com/user/Americanvogue)
 and [British Vogue](https://www.youtube.com/user/vogue). I saved it to the `description_All.csv` file for you to use.
 
-```{r message=FALSE}
+```{r warning=FALSE, message=FALSE}
 
 library(topicmodels)
 library(tm)
 
 description_All <- as.data.table(read.csv("YouTube tutorial-data/description_All.csv", stringsAsFactors=FALSE))
 description_All$source<-as.factor(description_All$source)
-kable(description_All)
+head (description_All)
 ```
 Topic modeling is a sophisticated technique that is used to classify text and identify themes. 
 
@@ -345,57 +464,75 @@ Topic modeling is a sophisticated technique that is used to classify text and id
  
 We look at the document and identify specific words and in the document that relate to a particular topic. How do we do this? We just randomly assigns words to topics. 
  
-Do we accurately know how many topis are there? No. We `Just Do It` and experment with different number of topics /documents/ words again and again and again to see what works best for our text. The whole processes is based on probabilities assessment, probability of a topic in a document and probability of a word in a topic. This process goes iteratively until it reaches some stable state. The document is assigned a topic(s) based on the proportion of the words assigned to each topic in this document and words are assigned to the topic based on the proportion of words assigned to the topic.
+Do we accurately know how many topis are there? No. We 
+*Just Do It* and experment with different number of topics /documents/ words again and again and again to see what works best for our text. The whole processes is based on probabilities assessment, probability of a topic in a document and probability of a word in a topic. This process goes iteratively until it reaches some stable state. The document is assigned a topic(s) based on the proportion of the words assigned to each topic in this document and words are assigned to the topic based on the proportion of words assigned to the topic.
 
 
+The math side of the algorithm is quite heavy. Indeed, you oare welcome to dig out the original work of [Blei et al. 2003 "Latent Dirichlet Allocation"](http://jmlr.csail.mit.edu/papers/v3/blei03a.html), but I would suggest that we try to do some practical things to get you going!
  
- recreating the documents in the corpus by adjusting the relative importance of topics in documents and words in topics iteratively.
-
-
+ So. The `tm` package.
  
- This makes it closer to natural language processing - the way we (humans) understand the text - and brings hope for accuracy. The math side of the algorithm is quite heavy. Indeed, you oare welcome to dig out the original work of [Blei et al. 2003 "Latent Dirichlet Allocation"(http://jmlr.csail.mit.edu/papers/v3/blei03a.html), but I would suggest that we try to do some practical things to get you going!
+ It has a different philosophy than `tidytext`. 
  
+ The main concept for `tm` way of managing documents is a `Corpus`
  
+ * `Corpus`: collection of documents
+ 
+ So, let's load our data there and point to the text
 
-The `tm` package has a different philosophy than `tidytext`. We will be working with a `corpus` of text
-source
+```{r warning=FALSE, message=FALSE}
+corpus = Corpus(VectorSource(description_All$description))
+```
+Now that we have our corpus to analyse we need to clean it.
 
-lm(viewCount ~ sentiment )
+```{r warning=FALSE, message=FALSE}
+corpus <- tm_map(corpus, tolower) #convert to lowercase
+corpus <- tm_map(corpus, removePunctuation) #remove punctuation
+corpus <- tm_map(corpus, removeWords, stopwords("english")) #remove stopwords
+```
+While the `tidytext` package has a very useful `unnest_tokens` function that not only tokenize the text, but also does some basic cleanup, including converting to lowercase, the `tm` package requires several steps.
 
+Next is stemming: you can think about it as a grand-parent of tokenization... Well, not exactly. Linquists see a really big difference between the two and add **lemmazation** to the discussion as well. **Stemming** usually "chops" of the word to get a "unique" form of the word. **Lemmazation** is more sophisticated and looks into vocabulary and morphological analysis of the word. **Tokenization** is different: it is segmenting the text where the segment can be a word, a sentence, lines, etc. Let's do it!
 
-#let's use tm package!
-# Pre-process data
-corpus = Corpus(VectorSource(text$txt))
-
-corpus <- tm_map(corpus, tolower)
-
-corpus <- tm_map(corpus, removePunctuation)
-
-corpus <- tm_map(corpus, removeWords, stopwords("english"))
-
-corpus <- tm_map(corpus, removeWords, UniqueLowIDF[1:500])
-
+```{r message=FALSE, warning=FALSE}
 corpus <- tm_map(corpus, stemDocument)
+```
 
+Next, generating a `document-term-matrix` and removing rare words:
+
+`Document-term-matrix (dtm)` is a matrix that describe frequencies of words in a  document. Rows are documents and columns are words (=terms)
+
+```{r message=FALSE, warning=FALSE}
 dtm = DocumentTermMatrix(corpus)
+```
+The first ten terms from our matrix: **`r head(dtm[["dimnames"]][["Terms"]], 10)`**
 
+DTM can get big... very big. But not all terms in the dtm are **that** important. Some just add noise and take processing time. 
+
+```{r message=FALSE, warning=FALSE}
 # Remove sparse terms
-dtm = removeSparseTerms(dtm, 0.997)
+dtm = removeSparseTerms(dtm, 0.997) #0.997 is sparsity: the function removes only terms that are more sparse than 0.997
+```
 
-# Create data frame
+Let's review most frequent terms and draw a wordcloud:
+```{r message=FALSE, warning=FALSE}
+findFreqTerms(dtm, 1000)
+```
+
+and finally create a data.frame for further analysis
+```{r message=FALSE, warning=FALSE}
 labeledTerms = as.data.frame(as.matrix(dtm))
 
 labeledTerms = labeledTerms[rowSums(abs(labeledTerms)) != 0,]
+```
+Now lets have a look at what we can find the `LDA`. We need to specify the number of topics - it is hard to do, but we need to start with something. We will have a look at approaches to get more accurate number of topics. So? We need a number....
 
-##############################################################################
-#LDA Modelling Starts
-###############################################################################
+```{r message=FALSE, warning=FALSE}
+news_lda <- LDA(labeledTerms, k = 5, control = list(seed = 13))# set a seed so that the output of the model is predictable
+```
+We are back to the `tidytext` package to make the output more readable
 
-# set a seed so that the output of the model is predictable
-news_lda <- LDA(labeledTerms, k = 4, control = list(seed = 13))
-
-#The tidytext package provides this method for extracting the per-topic-per-word probabilities, 
-# called   β  (“beta”), from the model
+```{r message=FALSE, warning=FALSE}
 news_topics <- tidy(news_lda, matrix = "beta")
 
 news_top_terms <- news_topics %>%
@@ -404,17 +541,25 @@ news_top_terms <- news_topics %>%
   ungroup() %>%
   arrange(topic, -beta)
 
-
 news_top_terms %>%
   mutate(term = reorder(term, beta)) %>%
   ggplot(aes(term, beta, fill = factor(topic))) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~ topic, scales = "free") +
   coord_flip() + theme_bw()
+```
 
-#------------------------lda tuning
+Now we need to have a look at terms in each topic to see what topic they can "make"... You rarely get the number of topics right in the first run!
 
-result <- FindTopicsNumber(
+There are ways to mathematically estimate the number of topics. They are quite advanced and take time and resources to run. I ran it for us using the `ldatuning` package and here are the results `ldaResults`. The function is indeed resource intensive and it took half an hour to process on this "small" dataset.
+
+```{r echo=FALSE, fig.height=3}
+img <- readPNG(file.path("YouTube tutorial-figure/ldatuning.png"))
+grid.raster(img)
+```
+
+The function to use there is 
+`FindTopicsNumber(
   labeledTerms,
   topics = seq(from = 2, to = 80, by = 1),
   metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
@@ -423,5 +568,9 @@ result <- FindTopicsNumber(
   mc.cores = 2L,
   verbose = TRUE
 )
+`
+and it is easier to work with the results on the plot
 
-FindTopicsNumber_plot(result)
+`FindTopicsNumber_plot(result)`
+
+
