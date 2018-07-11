@@ -202,14 +202,11 @@ The main `tidytext` `r emo::ji('package')` function which will do this for us is
 ```{r}
 all_tweets %>%
   filter(!duplicated(all_tweets)) %>% # remove duplicated tweets
-  mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was too generic
+  mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was duplicated
   select(-X1) %>%
   unnest_tokens(output = word, input = text, token = "words") %>% # convert tweet in the text column to token = words
-  select(tweetID,word) %>%
-  count(word)
+  select(tweetID,word)
 ```
-
-There is a lot of useless text in here `r emo::ji('scream')` !!
 
 **Create one-token-per-row where token are two consecutive words**
 
@@ -251,19 +248,22 @@ The code below will take the data frame `all_tweets` and convert it into a tidy 
 ```{r}
 replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
 unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
+
 all_words <- all_tweets %>% #
   filter(!duplicated(all_tweets)) %>% #
   mutate(text = str_replace_all(text, replace_reg, "")) %>%
   unnest_tokens(word, text, token = "regex", pattern = unnest_reg) %>%
   filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>% 
   filter(!(word==retweet_from))
+all_words[,c("word","tweetID")]
 ```
 
 **Save dataset**
 
-```{r}
+```{r eval=FALSE}
 dir.create("Twitter_Tutorial_data",showWarnings = FALSE)
-write_csv(all_words,path = "Twitter_Tutorial_data/combined_royal_time_series.csv")
+write_csv(all_words,path = "Twitter_Tutorial_data/combined_royal_time_series_all_words.csv")
+write_csv(all_tweets,path = "Twitter_Tutorial_data/combined_royal_time_series_all_tweets.csv")
 ```
 
 ## Hashtag frequency
@@ -286,7 +286,7 @@ our_hash
 
 Since hashtags are used to associate tweets to a topic/trend/theme it can be interesting to investigate, which other hashtags were used in co-occurance. Here we find all other hashtags that were used more than 80 times. We will plot these in a wordcloud using the `wordcloud2` `r emo::ji("package")`. A wordcloud gives greater prominence to words that appear more frequently in the source text by making them appear larger. 
 
-```{r, wordcloud, message=FALSE}
+```{r, wordcloud, message=FALSE,fig.width=7,fig.height=7,eval=FALSE}
 library(wordcloud2)
 
 all_hash <- all_words %>% 
@@ -302,6 +302,8 @@ all_hash <- all_words %>%
 
 wordcloud2(all_hash)
 ```
+
+![](Twitter_tutorial_figures/wordcloud1.png)
 
 We can also make a wordcloud in the shape of a crown `r emo::ji("crown")`. However for this to look good we need to also use words with lower frequency.
 
@@ -319,22 +321,21 @@ all_hash_more <- all_words %>%
   rename(freq = n) 
 
 
-crown_path <- "crown.jpeg"
+crown_path <- "./Twitter_tutorial_figures/crown.jpeg"
 hw <- wordcloud2(all_hash_more, size=1, figPath = crown_path )
 hw
 ```
 
-```{r crown, echo=FALSE, fig.height=5}
-img <- readPNG(file.path("Twitter_tutorial_figures/crown_wordcloud.png"))
-grid.raster(img)
-```
+
+
+![](Twitter_tutorial_figures/crown_wordcloud.png)
+
 
 Interestingly, when we find a lot of hashtags referring to competitions, i.e. \#win, \#competition, \#WinItWednesday. This may be an artefact of collecting data on Thurdays, as there are lots of companies trying to entice users to retweet their content with giveaway competitions such as \#WinItWednesday:
 
-```{r win, echo=FALSE, fig.height=5}
-img <- readPNG(file.path("Twitter_tutorial_figures/win.png"))
-grid.raster(img)
-```
+
+![](Twitter_tutorial_figures/win.png)
+
 
 ## Find popular accounts and tweets 
 
@@ -352,10 +353,7 @@ kable(popular_accounts[1:5,])
 
 Turns out this was \@KensingtonRoyal, which is the offical account of the Kensington Palace and on the day was tweeting out important information like the designer of Meghan Markle's dress:
 
-```{r kensington, echo=FALSE, fig.height=2}
-img <- readPNG(file.path("Twitter_tutorial_figures/kensington.png"))
-grid.raster(img)
-```
+![](Twitter_tutorial_figures/kensington.png)
 
 We might also be interested in the most popular tweet in terms of retweets that we sampled or general in the twitter universe. 
 
@@ -374,10 +372,8 @@ popular_sample$text[1]
 popular_general$text
 ```
 
-```{r lucy, echo=FALSE, fig.height=5}
-img <- readPNG(file.path("Twitter_tutorial_figures/lucy_sempey.png"))
-grid.raster(img)
-```
+
+![](Twitter_tutorial_figures/lucy_sempey.png)
 
 This is not the same tweet in our case `r emo::ji("open_mouth")`. When googling Lucy Sempey you indeed find that her tweet was the most retweeted during the `r emo::ji("crown")` Royal Wedding (<http://news.abs-cbn.com/trending/05/20/18/more-than-6m-tweets-on-harry-and-meghans-big-day>).  
 

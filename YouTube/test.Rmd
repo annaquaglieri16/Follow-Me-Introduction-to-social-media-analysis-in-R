@@ -1,0 +1,576 @@
+---
+title: "YouTube `r icon::fa_youtube(colour='#00aced')` - tutorial UseR 2018"
+author: "MariaProkofieva"
+date: "08/07/2018"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    theme: simplex
+---
+
+Welcome to the second part of the tutorial where we are going to have a look at another popular social media platform YouTube
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages to install
+```{r}
+library(knitr)
+#library(magick)
+library(png)
+library(tuber)
+library(tidyverse)
+library(tidytext)
+
+library(grid)
+#library(emo)
+library(icon)
+library(data.table)
+
+library(psych)
+library(psych)
+
+options(stringsAsFactors = FALSE) 
+
+```
+
+## Reference material for the following tutorial
+
+* [Setting up the YouTube API](https://developers.google.com/youtube/v3/getting-started)
+* [Using tuber
+](https://cran.r-project.org/web/packages/tuber/vignettes/tuber-ex.html)
+* [Text mining with R](https://www.tidytextmining.com/index.html)
+
+* [Topic modeling: The LDA Buffet is Now Open; or, Latent Dirichlet Allocation for English Majors](http://www.matthewjockers.net/2011/09/29/the-lda-buffet-is-now-open-or-latent-dirichlet-allocation-for-english-majors/)
+
+
+## Downloading YouTube data with `tuber`
+
+Once you setup your YouTube `r icon::fa("youtube")` access via the Google Developer Console, you can connect to the API and download data.
+
+A reminder: to connect you use `yt_oauth()`.
+
+```{r youtube_api, warning=FALSE, message=FALSE}
+app_id = "667235664106-a5e6ng7pna0ptv7qoqnrsn0ldm1i68a8.apps.googleusercontent.com" 
+app_secret = "8UV8kvt8cZ75EXg-ubOPBjDJ"
+
+#connect
+yt_oauth(app_id=app_id, app_secret=app_secret, token='', cache=FALSE)
+```
+
+By default the function  looks for `.httr-oauth` in the working directory in case you connected before. If it doesn't find it, it passes an application ID and a secret. If you do not want the function to use cache, set `cache=FALSE`.
+
+The function launches a browser to allow you to authorize the application
+
+Once you are connected, we can searching! 
+
+```{r youtube_search, warning=FALSE, message=FALSE}
+results <- yt_search("World Cup 2018")
+kable(results[1:4,1:5])
+```
+
+The `yt_search` function returns a `data.frame` with 16 elements, including 
+
+* `video_id`: id of the video that can be used later to get its stats 
+* `publishedAt`: date of the publication
+* `channelId`: id of the channel that can be used later to get access to the channel
+* `title`: title of the video
+* `description`: a short description of the vidl
+* `channelTitle`: a more "user-friendly" name of the channel
+
+The `yt_search` function takes parameters that let your specify your search. The most popular ones are:
+
+* `term`: a search term to be used, searches across different types, including `video` (the default one), `channel` and `playlist`.	
+* `max_results`: 	maximum number of items to be returned with the default set to 50 and maximum allowed = 500 
+* `channel_id`: search videos on the channel and requires a `channel id`
+* `type`: specify the type of the media and can take one three values: `video` (default), `channel`, `playlist`. 
+* `published_after` and	`published_before`: specifies the timeframe for search
+
+Now let's have a look at comments of the video. We can pick any video in our search and have a look at its comments, using video_id to get them
+
+```{r warning=FALSE, message=FALSE}
+results <- get_comment_threads(c(video_id="qlZaiBuOaz4"))
+kable(results[1:10, c("authorDisplayName", "textDisplay")])
+```
+
+You specify your `video id` in the `filter` argument. You can also use this argument to download comments for a specific channel. So, let's have a look at your favourite YouTube channel. Which one is your favourite? Mine is [Bloomberg](https://www.youtube.com/user/Bloomberg/featured)
+
+Channel id for `Bloomberg` is `UCUMZ7gohGI9HcU9VNsr2FJQ`. We are going to use more generic function, `list_channel_resources` that returns a list of requested channel resources.
+
+```{r comments, warning=FALSE, message=FALSE}
+a <- list_channel_resources(filter = c(channel_id = "UCUMZ7gohGI9HcU9VNsr2FJQ"), part="contentDetails")
+
+# Uploaded playlists:
+playlist_id <- a$items[[1]]$contentDetails$relatedPlaylists$uploads
+
+# Get videos on the playlist
+vids <- get_playlist_items(filter= c(playlist_id=playlist_id)) 
+
+# Video ids
+vid_ids <- as.vector(vids$contentDetails.videoId)
+
+# Function to scrape stats for all vids
+get_all_stats <- function(id) {
+  get_stats(id)
+} 
+
+# Get stats and convert results to data frame 
+res <- lapply(vid_ids, get_all_stats)
+
+res_df <- rbindlist(lapply(res, data.frame), fill=TRUE)
+
+head(res_df)
+```
+
+But... I guess.. it's getting too busy for the day, so let's take a break and have a look at [Victoria's Secrets](https://www.youtube.com/user/VICTORIASSECRET) 
+
+It's Brisbane, Australia after all!
+
+```{r brisbane, echo=FALSE, fig.height=3}
+img <- readPNG(file.path("YouTube tutorial-figure/brisbane.png"))
+grid.raster(img)
+```
+
+To locate the channel we need to use channel id, not its name.
+
+### Get the user/channel id
+
+Obtaining data from YouTube `r icon::fa("youtube")` channel and have a look at its stats. is usually done through `channel_id`, which is not the same as the YouTube name you see in the YouTube link.
+
+There are several ways to obtain your channel_id (YouTube name):
+
+* Use YouTube Data API 
+`https://www.googleapis.com/youtube/v3/channels?key={YOUR_API_KEY}&forUsername={USER_NAME}&part=id`
+where `YOUR_API_KEY` is the key you create in the google developer account 
+`USER_NAME` is the YouTube channel (username)
+
+```{r channel_id, echo=FALSE, fig.height=3}
+img <- readPNG(file.path("YouTube tutorial-figure/channelId1.png"))
+grid.raster(img)
+```
+
+* Use the page source code
+Open the YouTube page in the browser and view Source page. Search for either `externalId` or `data-channel-external-id`. The value there will be the channel id.
+
+```{r channel_id2, echo=FALSE, fig.height=3}
+img <- readPNG(file.path("YouTube tutorial-figure/channelId2.png"))
+grid.raster(img)
+```
+
+###Downloading channel stats
+
+Now that we have the channel id, lets get a list of its videos and have a look at its stats
+
+```{r VS_search, warning=FALSE, message=FALSE}
+channel_id<-"UChWXY0e-HUhoXZZ_2GlvojQ"
+videosVS = yt_search(term="", type="video", channel_id = channel_id)
+kable(videosVS[1:4,1:5])
+#get channel stats
+statsVS<-get_channel_stats(channel_id=channel_id)
+statsVSSelected <- as.vector(statsVS$statistics)
+results<-do.call(rbind, statsVSSelected)
+head(results)
+```
+
+The `get_channel_stats` function is quite straightforward. It take `channel_id` as an argument and returns a nested list. We can select the items we need from the list and convert it to a data.frame
+
+###Downloading stats for videos
+Now that we have a list of videos from VS channel, let's download stats for each video. As an example let's do first 10
+
+```{r VS_video_search, warning=FALSE, message=FALSE}
+
+videosVS_sample<-videosVS[1:10,]
+
+videoStatsVS = lapply(as.character(videosVS_sample$video_id), function(x){
+  get_stats(video_id = x)
+})
+videoStatsVS_df = do.call(rbind.data.frame, videoStatsVS)
+head(videoStatsVS_df)
+```
+
+The function uses video ids, but does not return video title and dates, which we can add ourselves and do some clean-up
+
+```{r VS_video_search2, warning=FALSE, message=FALSE}
+videoStatsVS_df$title = videosVS_sample$title
+videoStatsVS_df$date = videosVS_sample$date
+
+library(tidyverse)
+videoStatsVS_df = as.tibble(videoStatsVS_df) %>%
+  mutate(viewCount = as.numeric(as.character(viewCount)), #originally as factor
+         likeCount = as.numeric(as.character(likeCount)),
+         dislikeCount = as.numeric(as.character(dislikeCount)),
+         commentCount = as.numeric(as.character(commentCount)))
+
+head(videoStatsVS_df)
+```
+
+I ran the function with the full list of video ids for the channel and you can use this file `videoStatsVS_df.csv` under the `YouTube tutorial-data` folder. Let's load it
+
+```{r message=FALSE}
+videoStatsVS_df <- as.data.table(read.csv("YouTube tutorial-data/videoStatsVS_df.csv", stringsAsFactors=FALSE))
+head(videoStatsVS_df)
+```
+
+Let's see which video was most popular:
+
+The most view counts are:
+
+```{r VS_popular1, warning=FALSE, message=FALSE}
+
+videoStatsVS_df %>% arrange_(~ desc(viewCount)) %>%
+  top_n(n = 5) %>% 
+  select(title, viewCount, likeCount, favoriteCount, commentCount, id)
+```
+
+Let's have a look at it!
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vDFxWXpIgDE" frameborder="0" allowfullscreen></iframe>
+
+
+The most likes are:
+
+```{r VS_popular2, warning=FALSE, message=FALSE}
+
+videoStatsVS_df %>% arrange_(~ desc(likeCount)) %>%
+  top_n(n = 5) %>% 
+  select(title, likeCount, viewCount, favoriteCount, commentCount, id)
+```
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/wehYd9RcKDA" frameborder="0" allowfullscreen></iframe>
+
+The most comments got:
+```{r VS_popular3, warning=FALSE, message=FALSE}
+
+videoStatsVS_df %>% arrange_(~ desc(commentCount)) %>%
+  top_n(n = 5) %>% 
+  select(title, commentCount, viewCount, likeCount, favoriteCount, id)
+```
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vDFxWXpIgDE" frameborder="0" allowfullscreen></iframe>
+
+###Downloading titles and comments
+Let's have a look at titles now and see what we can find there.
+
+Continuing with the "girl power" theme, let's compare VS to another powerhouse, US Vogue.
+
+Following the procedure described earlier, I downloaded video stats for both VS and US Vogue channels and merge them into one file, `videostats_All.csv`
+
+Further analysis will include manipulation with text, so we will need `tidyverse` and `tidytext` packages
+
+```{r}
+library(tidyverse)
+library(tidytext)
+```
+
+you can either download the channel stats yourself (see above) or use `videostats_All.csv`
+
+Channel ids are:
+* `Americanvogue` = `UCRXiA3h1no_PFkb1JCP0yMA`
+* `VICTORIASSECRET`= `UChWXY0e-HUhoXZZ_2GlvojQ`
+
+To load the existing file let's do this
+
+```{r warning=FALSE, message=FALSE}
+videostats_All <- as.data.table(read.csv("YouTube tutorial-data/videostats_All.csv", stringsAsFactors=FALSE))
+head(videostats_All)
+```
+
+Let's have a brief look at the data. We are going to use the `stargazer` package which is fantastic for generating "academic" looking results and `describeBy` function from the `psych` package that generates statistics by a grouping variable. We will group variables by channel is.
+
+```{r warning=FALSE, message=FALSE}
+library(stargazer)
+
+stargazer(videostats_All[,.(viewCount, likeCount, commentCount, dislikeCount)], median=TRUE, digit= 1, type = "text")
+
+library(psych)
+
+results<-describeBy(videostats_All[, .(viewCount, likeCount, commentCount, dislikeCount)], 
+          group=videostats_All$source, digits=1, mat=TRUE) 
+
+results[,c(1:7, 10:11)]
+
+```
+Just a reminder that:
+* `mean`: average
+* `st. dev`: is a measure of variation in the data compared to the average
+* `min` and `max`: extreme values 
+
+Likely that the number of views relates to the number of likes: the more people view the video, the more they "like" it. We can do a correlation for this using `corr.test` function from the same `psych` package
+
+```{r warning=FALSE, message=FALSE}
+results<-corr.test(videostats_All[, .(viewCount, likeCount, commentCount, dislikeCount)], use = "complete",method="pearson",adjust="holm",
+          alpha=.05,ci=FALSE)
+results$r
+```
+Or we can have a plot it on a graph with the help of `gglot2` and `gridExtra`
+
+```{r warning=FALSE, message=FALSE}
+library (ggplot2)
+library(gridExtra)
+p1=ggplot(data = videostats_All[-1, ]) + geom_point(aes(x = viewCount, y = likeCount))
+p2=ggplot(data = videostats_All[-1, ]) + geom_point(aes(x = viewCount, y = dislikeCount))
+p3=ggplot(data = videostats_All[-1, ]) + geom_point(aes(x = viewCount, y = commentCount))
+grid.arrange(p1, p2, p3, ncol = 2)
+```
+
+You just cannot LOVE Adriana Lima! But move on....
+
+##Text analysis
+
+As you see the `title` column has a title that describes the video. It is logically to assume that title is the first to attract attention of the viewer. Let's have a closer look and see if we can identify specific words.
+
+Let's tokenize the title, clean it from stop words and calculate frequencies of words in the title. `Frequency` is calculated as the number of times a particular word is used in the title compared to the total number of different words used in the channel.
+
+```{r}
+title_words_All_Source<-videostats_All %>%
+  as.tibble() %>% 
+  unnest_tokens(word, title) %>%
+  anti_join(stop_words) %>%
+  count(source, word, sort = TRUE) %>%
+  left_join(videostats_All %>% 
+              group_by(source) %>% 
+              summarise(total = n())) %>%
+  mutate(freq = n/total) 
+```
+
+I saved the output into `title_words_All_Source.csv` file , so you can load it and continue working with a tokenized version of the text.
+
+```{r warning=FALSE, message=FALSE}
+title_words_All_Source <- as.data.table(read.csv("YouTube tutorial-data/title_words_All_Source.csv", stringsAsFactors=FALSE))
+head(title_words_All_Source)
+```
+We can compare frequencies of the word usage between VS and Vogue:
+  
+```{r warning=FALSE, message=FALSE}
+frequencyVS_Vogue <- title_words_All_Source %>% 
+  select(source, word, freq) %>% 
+  spread(source, freq) %>%
+  arrange(VS, Vogue)
+head(frequencyVS_Vogue, 10)
+```
+
+So thqt it make more sense let's show word usage by building up the wordcloud. This will allow us to see the most prominent words immediately.
+
+```{r warning=FALSE, message=FALSE}
+words_VS <-title_words_All_Source%>% 
+filter(source=="VS")%>%
+select(word, n)
+
+words_Vogue <-title_words_All_Source%>% 
+filter(source=="Vogue")%>%
+select(word, n)
+
+library(wordcloud)      
+wordcloud(words_VS$word, words_VS$n)
+wordcloud(words_Vogue$word, words_Vogue$n)
+
+library(wordcloud2)
+wordcloud2(data=words_VS, size = 1,
+color = "random-light",  shape = 'star')
+
+```
+Moving on further into the text analysis, let's have a look at the sentiment.
+
+Sentiment analysis is a tool that assess the tone and the voice of the text. It uses pre-made dictionaries with words classified into categories. Different dictionaries use different categories. For example, the `nrc lexicon` categorizes words in a binary fashion (“yes”/“no”) into categories of positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust. 
+We can get the list of words in the dictionary and there further options to adjust the list:
+```{r warning=FALSE, message=FALSE}
+get_sentiments("afinn")  #assigns words with a score that runs between -5 and 5, with negative scores indicating negative sentiment and positive scores indicating positive sentiment.
+
+get_sentiments("bing") #categorizes words in a binary fashion into positive and negative categories. 
+
+get_sentiments("nrc") #categories of positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust.
+```
+
+We will plot the results and will use `ggplot2` package for this.
+
+```{r warning=FALSE, message=FALSE}
+
+library(ggplot2)
+title_words_All_Source %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(source, sentiment) %>%
+  summarize(n = n()) %>%
+  ggplot(aes(x = source, y = n, fill = source)) + 
+  geom_bar(stat = "identity", alpha = 0.8) + 
+  facet_wrap(~ sentiment, ncol = 5) 
+```
+
+On the next steps, we can have a look at comments for different sources and compare the word usage in the audience. Downloading all comments takes time.. You can do it on your own using the following function:
+  
+```
+commentsVS = lapply(as.character(videosVS$video_id), function(x){
+  get_comment_threads(c(video_id = x), max_results = 50)
+)
+```
+
+Please note that if the number of comments is too high, you may get errors.. To avoid, limit the `max_results`. 
+
+or you can use the file I created for you. I used VS (you should already have it!), US Vogue and British Vogue channels for the dataset `comments_All.csv`
+
+```{r message=FALSE}
+comments_All <- as.data.table(read.csv("YouTube tutorial-data/comments_All.csv", stringsAsFactors=FALSE))
+head(comments_All)
+```
+
+As you see we need to clean the text. it does look messy.....
+
+```{r message=FALSE}
+replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
+unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
+
+comments_words<-comments_All %>%
+  as.tibble() %>% 
+  unnest_tokens(word, comment, token = "regex", pattern = unnest_reg) %>%
+  filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>%
+  count(source, word, sort = TRUE) 
+```
+Now let's apply the sentiment:
+
+```{r warning=FALSE, message=FALSE}
+
+library(ggplot2)
+comments_words %>%
+  inner_join(get_sentiments("bing")) %>%
+  group_by(source, sentiment) %>%
+  summarize(n = n()) %>%
+  ggplot(aes(x = source, y = n, fill = source)) + 
+  geom_bar(stat = "identity", alpha = 0.8) + 
+  facet_wrap(~ sentiment, ncol = 5) 
+```
+
+##Topic modelling
+
+Let's see what topics we can find in the description of the videos and compare them across three channels, US Vogue, British Vogue and VS. Does the description of the video affect the number of likes, views and dislikes?
+
+For the topic modeling we will go to the `topicmodels` package. It does not work well with `tidytext`, so we will use the `tm` package.
+
+We will use the dataset we have already `videosVS` - it has a list of all videos from the channel as well as its description. I also downloaded the same data from  [US Vogue](https://www.youtube.com/user/Americanvogue)
+and [British Vogue](https://www.youtube.com/user/vogue). I saved it to the `description_All.csv` file for you to use.
+
+```{r warning=FALSE, message=FALSE}
+
+library(topicmodels)
+library(tm)
+
+description_All <- as.data.table(read.csv("YouTube tutorial-data/description_All.csv", stringsAsFactors=FALSE))
+description_All$source<-as.factor(description_All$source)
+head (description_All)
+```
+Topic modeling is a sophisticated technique that is used to classify text and identify themes. 
+
+ The most promising and widely used algorith at this time is `Latent Dirichlet Allocation (LDA)`. The beauty of algorithm is that it allows overlapping between topics (=themes). It assumes that each document is a collection of topics. These topics can also be shared among several documents. How do we identify which topics are covered in the document?
+ 
+We look at the document and identify specific words and in the document that relate to a particular topic. How do we do this? We just randomly assigns words to topics. 
+ 
+Do we accurately know how many topis are there? No. We 
+*Just Do It* and experment with different number of topics /documents/ words again and again and again to see what works best for our text. The whole processes is based on probabilities assessment, probability of a topic in a document and probability of a word in a topic. This process goes iteratively until it reaches some stable state. The document is assigned a topic(s) based on the proportion of the words assigned to each topic in this document and words are assigned to the topic based on the proportion of words assigned to the topic.
+
+
+The math side of the algorithm is quite heavy. Indeed, you oare welcome to dig out the original work of [Blei et al. 2003 "Latent Dirichlet Allocation"](http://jmlr.csail.mit.edu/papers/v3/blei03a.html), but I would suggest that we try to do some practical things to get you going!
+ 
+ So. The `tm` package.
+ 
+ It has a different philosophy than `tidytext`. 
+ 
+ The main concept for `tm` way of managing documents is a `Corpus`
+ 
+ * `Corpus`: collection of documents
+ 
+ So, let's load our data there and point to the text
+
+```{r warning=FALSE, message=FALSE}
+corpus = Corpus(VectorSource(description_All$description))
+```
+Now that we have our corpus to analyse we need to clean it.
+
+```{r warning=FALSE, message=FALSE}
+corpus <- tm_map(corpus, tolower) #convert to lowercase
+corpus <- tm_map(corpus, removePunctuation) #remove punctuation
+corpus <- tm_map(corpus, removeWords, stopwords("english")) #remove stopwords
+```
+While the `tidytext` package has a very useful `unnest_tokens` function that not only tokenize the text, but also does some basic cleanup, including converting to lowercase, the `tm` package requires several steps.
+
+Next is stemming: you can think about it as a grand-parent of tokenization... Well, not exactly. Linquists see a really big difference between the two and add **lemmazation** to the discussion as well. **Stemming** usually "chops" of the word to get a "unique" form of the word. **Lemmazation** is more sophisticated and looks into vocabulary and morphological analysis of the word. **Tokenization** is different: it is segmenting the text where the segment can be a word, a sentence, lines, etc. Let's do it!
+
+```{r message=FALSE, warning=FALSE}
+corpus <- tm_map(corpus, stemDocument)
+```
+
+Next, generating a `document-term-matrix` and removing rare words:
+
+`Document-term-matrix (dtm)` is a matrix that describe frequencies of words in a  document. Rows are documents and columns are words (=terms)
+
+```{r message=FALSE, warning=FALSE}
+dtm = DocumentTermMatrix(corpus)
+```
+The first ten terms from our matrix: **`r head(dtm[["dimnames"]][["Terms"]], 10)`**
+
+DTM can get big... very big. But not all terms in the dtm are **that** important. Some just add noise and take processing time. 
+
+```{r message=FALSE, warning=FALSE}
+# Remove sparse terms
+dtm = removeSparseTerms(dtm, 0.997) #0.997 is sparsity: the function removes only terms that are more sparse than 0.997
+```
+
+Let's review most frequent terms and draw a wordcloud:
+```{r message=FALSE, warning=FALSE}
+findFreqTerms(dtm, 1000)
+```
+
+and finally create a data.frame for further analysis
+```{r message=FALSE, warning=FALSE}
+labeledTerms = as.data.frame(as.matrix(dtm))
+
+labeledTerms = labeledTerms[rowSums(abs(labeledTerms)) != 0,]
+```
+Now lets have a look at what we can find the `LDA`. We need to specify the number of topics - it is hard to do, but we need to start with something. We will have a look at approaches to get more accurate number of topics. So? We need a number....
+
+```{r message=FALSE, warning=FALSE}
+news_lda <- LDA(labeledTerms, k = 5, control = list(seed = 13))# set a seed so that the output of the model is predictable
+```
+We are back to the `tidytext` package to make the output more readable
+
+```{r message=FALSE, warning=FALSE}
+news_topics <- tidy(news_lda, matrix = "beta")
+
+news_top_terms <- news_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+news_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() + theme_bw()
+```
+
+Now we need to have a look at terms in each topic to see what topic they can "make"... You rarely get the number of topics right in the first run!
+
+There are ways to mathematically estimate the number of topics. They are quite advanced and take time and resources to run. I ran it for us using the `ldatuning` package and here are the results `ldaResults`. The function is indeed resource intensive and it took half an hour to process on this "small" dataset.
+
+```{r echo=FALSE, fig.height=3}
+img <- readPNG(file.path("YouTube tutorial-figure/ldatuning.png"))
+grid.raster(img)
+```
+
+The function to use there is 
+`FindTopicsNumber(
+  labeledTerms,
+  topics = seq(from = 2, to = 80, by = 1),
+  metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
+  method = "Gibbs",
+  control = list(seed = 77),
+  mc.cores = 2L,
+  verbose = TRUE
+)
+`
+and it is easier to work with the results on the plot
+
+`FindTopicsNumber_plot(result)`
+
+

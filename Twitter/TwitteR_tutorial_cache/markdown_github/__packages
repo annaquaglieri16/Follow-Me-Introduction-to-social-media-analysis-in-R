@@ -16,5 +16,4 @@ stringr
 forcats
 tidytext
 bindrcpp
-wordcloud2
 plotly

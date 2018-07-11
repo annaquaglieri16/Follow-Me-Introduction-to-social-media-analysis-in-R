@@ -1,7 +1,3 @@
-Analyse Royal Tweets - useR! 2018
-================
-Anna Quaglieri & Saskia Freytag
-useR! July 2018
 
 -   [Packages to install](#packages-to-install)
 -   [Reference material for the following tutorial](#reference-material-for-the-following-tutorial)
@@ -46,14 +42,14 @@ library(twitteR)
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ──────────────────────────────────────────────────── tidyverse 1.2.1 ──
+    ## ── Attaching packages ─────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 
     ## ✔ ggplot2 2.2.1     ✔ purrr   0.2.5
     ## ✔ tibble  1.4.2     ✔ dplyr   0.7.5
     ## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
     ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 
-    ## ── Conflicts ─────────────────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
     ## ✖ dplyr::filter()   masks stats::filter()
     ## ✖ dplyr::id()       masks twitteR::id()
     ## ✖ dplyr::lag()      masks stats::lag()
@@ -245,29 +241,26 @@ The main `tidytext` 📦 function which will do this for us is `unnest_token`. L
 ``` r
 > all_tweets %>%
 +   filter(!duplicated(all_tweets)) %>% # remove duplicated tweets
-+   mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was too generic
++   mutate(tweetID = 1:n()) %>% # set a TweetID column, X1 was duplicated
 +   select(-X1) %>%
 +   unnest_tokens(output = word, input = text, token = "words") %>% # convert tweet in the text column to token = words
-+   select(tweetID,word) %>%
-+   count(word)
++   select(tweetID,word)
 ```
 
-    ## # A tibble: 57,332 x 2
-    ##    word                                      n
-    ##    <chr>                                 <int>
-    ##  1 ____                                      3
-    ##  2 _____                                     1
-    ##  3 ______________                           12
-    ##  4 ___________________                       1
-    ##  5 _____________________                     3
-    ##  6 _____________________________________     1
-    ##  7 ___fittaymuu                              2
-    ##  8 ___mkc___                                 5
-    ##  9 ___q__                                    1
-    ## 10 __christan                                3
-    ## # ... with 57,322 more rows
-
-There is a lot of useless text in here 😱 !!
+    ## # A tibble: 1,876,795 x 2
+    ##    tweetID word      
+    ##      <int> <chr>     
+    ##  1       1 rt        
+    ##  2       1 acpfonline
+    ##  3       1 this      
+    ##  4       1 is        
+    ##  5       1 a         
+    ##  6       1 wind      
+    ##  7       1 up        
+    ##  8       1 surely    
+    ##  9       1 to        
+    ## 10       1 think     
+    ## # ... with 1,876,785 more rows
 
 **Create one-token-per-row where token are two consecutive words**
 
@@ -334,19 +327,37 @@ The code below will take the data frame `all_tweets` and convert it into a tidy 
 ``` r
 > replace_reg <- "https://t.co/[A-Za-z\\d]+|http://[A-Za-z\\d]+|&amp;|&lt;|&gt;|RT|https"
 > unnest_reg <- "([^A-Za-z_\\d#@']|'(?![A-Za-z_\\d#@]))"
+> 
 > all_words <- all_tweets %>% #
 +   filter(!duplicated(all_tweets)) %>% #
 +   mutate(text = str_replace_all(text, replace_reg, "")) %>%
 +   unnest_tokens(word, text, token = "regex", pattern = unnest_reg) %>%
 +   filter(!word %in% stop_words$word,str_detect(word, "[a-z]")) %>% 
 +   filter(!(word==retweet_from))
+> all_words[,c("word","tweetID")]
 ```
+
+    ## # A tibble: 622,346 x 2
+    ##    word          tweetID
+    ##    <chr>           <int>
+    ##  1 heads           13688
+    ##  2 263a            13688
+    ##  3 fe0f            13688
+    ##  4 #competition    13688
+    ##  5 #win            13688
+    ##  6 celebrate       13688
+    ##  7 #royalwedding   13688
+    ##  8 simply          13688
+    ##  9 follow          13688
+    ## 10 retweet         13688
+    ## # ... with 622,336 more rows
 
 **Save dataset**
 
 ``` r
 > dir.create("Twitter_Tutorial_data", showWarnings = FALSE)
-> write_csv(all_words, path = "Twitter_Tutorial_data/combined_royal_time_series.csv")
+> write_csv(all_words, path = "Twitter_Tutorial_data/combined_royal_time_series_all_words.csv")
+> write_csv(all_tweets, path = "Twitter_Tutorial_data/combined_royal_time_series_all_tweets.csv")
 ```
 
 Hashtag frequency
@@ -378,10 +389,8 @@ Since hashtags are used to associate tweets to a topic/trend/theme it can be int
 > wordcloud2(all_hash)
 ```
 
-<!--html_preserve-->
+![](Twitter_tutorial_figures/wordcloud1.png)
 
-<script type="application/json" data-for="htmlwidget-7706ff76958a135def0d">{"x":{"word":["#win","#competition","#winitwednesday","#royalwed","#champ","#royalwedding2018","#champagne","#r","#royal","#ro","#voxpop","#royalw","#anzacday","#meganmarkle","#royals","#suits","#windsor","#freebiefriday","#princewilliam","#meghanmarkle's","#duchessofsussex","#royalweddi","#roya","#royalwedd","#wedding","#royalwe","#windsorcastle","#royalfamily","#royalweddin","#princeharry's","#princessdiana","#chogm2018","#happy","#brexit","#birmingham","#meghan","#commonwealthday","#brooklyn99","#worldcup2018","#t","#uk","#aroyalromance","#sexualchocolate","#giveaway","#celebration","#etsy","#phone","#honor10","#weekend","#walkofamerica","#maheshb","#s","#qanon","#weddingcake","#icymi"],"freq":[1893,1610,644,616,609,525,519,384,366,334,281,279,251,247,233,220,178,175,167,160,160,135,129,128,127,127,125,125,122,119,117,116,114,109,105,102,102,102,100,95,93,91,90,90,90,88,87,87,86,86,85,84,83,81,81],"fontFamily":"Segoe UI","fontWeight":"bold","color":"random-dark","minSize":0,"weightFactor":0.0950871632329636,"backgroundColor":"white","gridSize":0,"minRotation":-0.785398163397448,"maxRotation":0.785398163397448,"shuffle":true,"rotateRatio":0.4,"shape":"circle","ellipticity":0.65,"figBase64":null,"hover":null},"evals":[],"jsHooks":{"render":[{"code":"function(el,x){\n                        console.log(123);\n                        if(!iii){\n                          window.location.reload();\n                          iii = False;\n\n                        }\n  }","data":null}]}}</script>
-<!--/html_preserve-->
 We can also make a wordcloud in the shape of a crown 👑. However for this to look good we need to also use words with lower frequency.
 
 ``` r
@@ -392,16 +401,16 @@ We can also make a wordcloud in the shape of a crown 👑. However for this to l
 +     rename(freq = n)
 > 
 > 
-> crown_path <- "crown.jpeg"
+> crown_path <- "./Twitter_tutorial_figures/crown.jpeg"
 > hw <- wordcloud2(all_hash_more, size = 1, figPath = crown_path)
 > hw
 ```
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/crown-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/crown_wordcloud.png)
 
 Interestingly, when we find a lot of hashtags referring to competitions, i.e. \#win, \#competition, \#WinItWednesday. This may be an artefact of collecting data on Thurdays, as there are lots of companies trying to entice users to retweet their content with giveaway competitions such as \#WinItWednesday:
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/win-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/win.png)
 
 Find popular accounts and tweets
 --------------------------------
@@ -425,7 +434,7 @@ Next we turn our attention the accounts and tweets that did really well and gain
 
 Turns out this was @KensingtonRoyal, which is the offical account of the Kensington Palace and on the day was tweeting out important information like the designer of Meghan Markle's dress:
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/kensington-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/kensington.png)
 
 We might also be interested in the most popular tweet in terms of retweets that we sampled or general in the twitter universe.
 
@@ -446,7 +455,7 @@ We might also be interested in the most popular tweet in terms of retweets that 
 
     ## [1] "RT @LucySempey: One day you<U+2019>re 15 and posing outside Buckingham palace and 22 years later you<U+2019>re marrying the Prince. \n\nUnreal. \n\n#RoyalWed<U+2026>"
 
-<img src="TwitteR_tutorial_files/figure-markdown_github/lucy-1.png" style="display: block; margin: auto;" />
+![](Twitter_tutorial_figures/lucy_sempey.png)
 
 This is not the same tweet in our case 😮. When googling Lucy Sempey you indeed find that her tweet was the most retweeted during the 👑 Royal Wedding (<http://news.abs-cbn.com/trending/05/20/18/more-than-6m-tweets-on-harry-and-meghans-big-day>).
 
